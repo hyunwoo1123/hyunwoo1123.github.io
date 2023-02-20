@@ -1,7 +1,7 @@
 ---
 title: Go의 defer, panic, recover
 categories: [Go]
-tags: [go,panic,recover,defer,chatgpt]     # TAG names should always be lowercase
+tags: [go,panic,recover,defer,chatgpt_used]     # TAG names should always be lowercase
 ---
 *본 문서의 예제 코드는 ChatGPT가 만들었습니다.*
 
