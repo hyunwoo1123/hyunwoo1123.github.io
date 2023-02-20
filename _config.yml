@@ -19,9 +19,9 @@ timezone: Asia/Seoul
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: 현우의 개발 블로그                          # the main title
+title: 현우씨의 개발 블로그                          # the main title
 
-tagline: 부제   # it will display as the sub-title
+tagline: Backend, Go, ChatGPT   # it will display as the sub-title
 
 description: >-                        # used by seo meta and the atom feed
   A minimal, responsive, and powerful Jekyll theme for presenting professional writing.
@@ -33,7 +33,7 @@ github:
   username: hyunwoo1123             # change to your github username
 
 twitter:
-  username: a            # change to your twitter username
+  username:             # change to your twitter username
 
 social:
   # Change to your full name.
@@ -71,7 +71,7 @@ google_analytics:
 #     light  - Use the light color scheme
 #     dark   - Use the dark color scheme
 #
-theme_mode: dark   # [light|dark]
+theme_mode: light   # [light|dark]
 
 # The CDN endpoint for images.
 # Notice that once it is assigned, the CDN url
@@ -81,7 +81,7 @@ theme_mode: dark   # [light|dark]
 img_cdn:
 
 # the avatar on sidebar, support local or CORS resources
-avatar:
+avatar: '/avatar.jpeg'
 
 # boolean type, the global switch for ToC in posts.
 toc: true
