@@ -198,3 +198,6 @@ jekyll-archives:
   permalinks:
     tag: /tags/:name/
     category: /categories/:name/
+
+header:
+  teaser: /assets/img/default_thumbnail1.png
