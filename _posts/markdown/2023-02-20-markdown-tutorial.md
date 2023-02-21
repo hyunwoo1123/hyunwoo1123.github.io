@@ -3,7 +3,7 @@ title: 기본적인 마크다운(Markdown) 문법
 date: 2023-02-20 14:37:39 +/-TTTT
 categories: [Markdown]
 tags: [markdown, chatgpt_used]     # TAG names should always be lowercase
-thumbnail: "/assets/img/default_thumbnail1.png"
+# thumbnail: "/assets/img/default_thumbnail1.png"
 ---
 
 본 문서는 chatGPT에게 "마크다운 문법을 자세히 알려줘" 에 대한 chatGPT의 내용을 기반으로 필자가 추가적인 정보를 덧붙이고 편집하여 만든 튜토리얼입니다. 
