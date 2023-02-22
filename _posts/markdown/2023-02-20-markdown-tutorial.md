@@ -139,10 +139,26 @@ tags: [markdown, chatgpt_used]     # TAG names should always be lowercase
 
 그리고 \`\`\`를 일반적으로 사용하는 것이지, 꼭 \` 를 3개 붙여쓸 필요는 없습니다. 필요에 따라 4개 이상으로 감싸도 됩니다.
 
+**가장 중요한 것은** \`\`\`과 그 위의 본문 사이에는 반드시 개행이 필요합니다. 예를 들어
+
 ```python
 def greet(name):
     print(f"Hello, {name}!")
 ```
+
+이 코드를 코드 블록으로 추가하고자 한다면, 실제로는
+
+````markdown
+--본문--
+
+```python
+def greet(name):
+    print(f"Hello, {name}!")
+```
+
+````
+
+처럼 작성되어야 합니다. 위 사항을 지키지 않을 경우 local 환경에서는 정상적으로 화면에 보이지만 실제로 배포했을 시 디자인이 적용되지 않는 문제가 있습니다.
 
 ## 코드 블록에 제목 추가
 
