@@ -13,6 +13,13 @@ tags: [blog, trubleshooting]     # TAG names should always be lowercase
 config 파일에 문제가 있으면 local에서는 정상동작하지만, 배포했을 때 문제가 생기는 경우가 있다.
 
 
+2.22 추가
+
+그냥 단순히 아무 문제가 없더라고 github에서 배포 pipline이 돌아가는 과정에서 에러가 생겨 안되는 경우가 생각보다 잦게 일어난다.
+
+이 경우 그냥 다시 깃허브에서 rerun all-jobs를 수행하다보면 된다.
+
+이거 나중에 계속 문제생기면 싸그리 갈아엎어야할수도...
 
 
 
