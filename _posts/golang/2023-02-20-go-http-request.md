@@ -2,6 +2,8 @@
 title: Go의 http 통신
 categories: [Go]
 tags: [go,http,chatgpt_used]     # TAG names should always be lowercase
+published: false
+
 ---
 *본 문서의 예제 코드는 ChatGPT가 만들었습니다.*
 
