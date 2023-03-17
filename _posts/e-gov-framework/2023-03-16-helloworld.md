@@ -177,7 +177,6 @@ public String selectSampleList(@ModelAttribute("searchVO") SampleDefaultVO searc
 필요한 것은 Helloworld를 출력해줄 jsp파일과, 그걸 연결해주기 위해 Controller을 만들고 dispatcher-servlet.xml 파일을 수정할 것이다.
 
 
-
 ## Helloworld를 출력하는 jsp 파일 만들기
 
 `index.jsp`가 위치한 디렉토리에 `helloworld.jsp` 파일을 만들어보자. 예제로 필자가 만든 코드는 다음과 같다.
@@ -257,6 +256,162 @@ public class MyController {
 
 위 실습을 통해 우리는 전자정부 표준 프레임워크의 대략적인 구조를 훑어보고 간단한 HelloWorld를 출력하는 페이지를 만들어보았다.
 
+
+
+
+# 데이터 주고받기(GET,POST)
+
+이제 데이터를 주고받는 기능을 사용해보자.
+
+## form을 통해 GET,POST 데이터 전송(Client to server)
+
+form을 이용해 GET/POST 방식으로 데이터를 주고받아보자.
+
+우선 form을 작성할 수 있는 페이지를 만들어야 한다.
+
+`index.jsp`가 있는 위치에, `form_client_to_server.jsp` 파일을 추가로 만든다.
+
+```jsp
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>form으로 GET POST 전송하기</title>
+</head>
+<body>
+
+<form name="f1" method="post" action="post_client_to_server.do">
+<table>
+	<tr>
+		<th>POST로 전송할 데이터:</th>
+		<td><input type="text" name="data"></td>
+</table>
+</form>
+
+<form name="f2" method="get" action="get_client_to_server.do">
+<table>
+	<tr>
+		<th>GET으로 전송할 데이터:</th>
+		<td><input type="text" name="data"></td>
+</table>
+</form>
+
+</body>
+</html>
+```
+
+MyController.java 에도 다음 메소드를 추가한다.
+
+```java
+	@RequestMapping(value = "form_client_to_server.do")
+	public String formPostClientToServer (String data) {
+		System.out.println(data);
+		return "form_client_to_server";
+	}
+
+	//Post로 서버에서 클라이언트가 준 데이터 받
+	@RequestMapping(value = "/post_client_to_server.do", method = RequestMethod.POST)
+	public String postClientToServer (String data) {
+		System.out.println(data);
+		return "";
+	}
+	
+	//Get로 서버에서 클라이언트가 준 데이터 받
+	@RequestMapping(value = "/get_client_to_server.do", method = RequestMethod.GET)
+	public String getClientToServer (String data) {
+		System.out.println(data);
+		return "";
+	}
+```
+
+그 후 `localhost:8080/프로젝트명/form_client_to_server.do` 에 들어가면, 다음과 같은 화면을 확일할 수 있다.
+
+![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-helloworld-form1.png)
+
+그 후 예를들어 다음과 같이 입력 후 엔터를 누르게 된다면,
+
+![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-helloworld-form2.png)
+
+Console에 Post로 전달된 데이터가 출력되는 것을 확인할 수 있다.
+
+마찬가지로, 아래와 같이 GET 방식으로 데이터를 전달하여도
+
+![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-helloworld-form3.png)
+
+똑같이 Console에 전달된 데이터가 출력된다.
+
+## java서버에서 jsp로 데이터 보내기(Server to Client)
+
+방법이 3가지가 있다. 3가지 예제를 모두 추가하여 테스트해보자.
+
+우선 `MyController.java`에 다음 메소드들을 추가하자
+
+```java
+	@RequestMapping(value = "/server_to_client1.do")
+	public ModelAndView serverToClient1(ModelAndView mv) {
+		mv.addObject("data", "서버에서 보낸 데이터1");
+		mv.setViewName("server_to_client1");
+		return mv;
+	}
+
+	@RequestMapping(value = "/server_to_client2.do")
+	public String serverToClient2(Model model) {
+        model.addAttribute("data", "서버에서 보낸 데이터2");
+		return "server_to_client1";
+	}
+	
+	@RequestMapping(value = "/server_to_client3.do")
+	public String serverToClient2(HttpServletRequest request) {
+        request.setAttribute("data", "서버에서 보낸 데이터3");
+        return "server_to_client2";
+	}
+```
+
+맨 위에서부터 각각 `ModelAndView`,`Model`,`HttpServletRequest` 로 데이터를 전송하는 방법이다.
+
+그리고 이 데이터를 받아 출력할 jsp파일 2개를 추가하자. `ModelAndView`,`Model`로 전송한 데이터는 클라이언트에서 받는 방법이 동일하기 때문에 3개가 아니라 2개의 jsp를 추가한다.
+
+1. server_to_client1.jsp
+
+```jsp
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>서버에서 받은 데이터</title>
+</head>
+<body>
+    <h1>${data}</h1>
+</body>
+</html>
+```
+
+2. server_to_client2.jsp
+
+```jsp
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>서버에서 받은 데이터</title>
+</head>
+<body>
+    <h1>${requestScope.data}</h1>
+</body>
+</html>
+```
+
+그 후 `localhost:8080/프로젝트명/server_to_client1.do`, `localhost:8080/프로젝트명/server_to_client2.do`, `localhost:8080/프로젝트명/server_to_client3.do`
+
+url에 접속하면 각 데이터가 클라이언트로 전송되어 출력되는 것을 확인할 수 있다.
+
+# 데이터베이스 연결
 
 
 
