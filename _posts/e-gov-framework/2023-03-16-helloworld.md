@@ -334,11 +334,20 @@ MyController.java 에도 다음 메소드를 추가한다.
 
 ![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-helloworld-form2.png)
 
+결과 : 
+
+![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-helloworld-post.png)
+
 Console에 Post로 전달된 데이터가 출력되는 것을 확인할 수 있다.
 
 마찬가지로, 아래와 같이 GET 방식으로 데이터를 전달하여도
 
 ![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-helloworld-form3.png)
+
+결과 : 
+
+![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-helloworld-get.png)
+
 
 똑같이 Console에 전달된 데이터가 출력된다.
 
@@ -411,7 +420,7 @@ Console에 Post로 전달된 데이터가 출력되는 것을 확인할 수 있�
 
 url에 접속하면 각 데이터가 클라이언트로 전송되어 출력되는 것을 확인할 수 있다.
 
-# 데이터베이스 연결
+<!-- # 데이터베이스 연결 -->
 
 
 
