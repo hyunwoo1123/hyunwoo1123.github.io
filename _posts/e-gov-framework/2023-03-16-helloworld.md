@@ -6,7 +6,7 @@ tags: [egov]     # TAG names should always be lowercase
 
 본 문서는 전자정부 표준프레임워크의 구조(MVC패턴)에 대한 설명을 포함하여 차근차근 간단한 Web Project Helloworld 예제를 작성하는 가이드입니다.
 
-우선 본 문서를 열람하기 전에, [설치 가이드](https://hyunwoo1123.github.io/posts/tutorial/)를 잘 따라서 진행해 주세요.
+우선 본 문서를 열람하기 전에, [설치 가이드](https://hyunwoo1123.github.io/posts/install/)를 잘 따라서 진행해 주세요.
 
 # 도메인을 통한 클라이언트의 접근 구조
 
