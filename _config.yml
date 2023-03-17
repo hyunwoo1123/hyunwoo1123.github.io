@@ -21,7 +21,7 @@ timezone: Asia/Seoul
 
 title: 현우씨의 개발 블로그                          # the main title
 
-tagline: Backend, Go, ChatGPT   # it will display as the sub-title
+tagline: Backend, Go, egov, blabla...   # it will display as the sub-title
 
 description: >-                        # used by seo meta and the atom feed
   A minimal, responsive, and powerful Jekyll theme for presenting professional writing.

@@ -86,10 +86,10 @@ tags: [markdown, chatgpt_used]     # TAG names should always be lowercase
 ** [대체 텍스트란?](#대체-텍스트alternative-text-alt-text)
 
 ```markdown
-![고양이](https://placekitten.com/200/300)
+![고양이](https://hyunwoo1123.github.io/assets/img/markdown/cat.jpeg)
 ```
 
-![고양이](https://placekitten.com/200/300)
+![고양이](https://hyunwoo1123.github.io/assets/img/markdown/cat.jpeg)
 
 
 ## 대체 텍스트(Alternative text, alt text)
@@ -111,10 +111,10 @@ tags: [markdown, chatgpt_used]     # TAG names should always be lowercase
 링크가 포함된 이미지를 추가할 때는 `[![대체 텍스트](이미지 URL)](링크)`와 같이 작성합니다
 
 ```markdown
-[![고양이](https://placekitten.com/200/300)](https://www.google.com)
+[![고양이](https://hyunwoo1123.github.io/assets/img/markdown/cat.jpeg)](https://www.google.com)
 ```
 
-[![고양이](https://placekitten.com/200/300)](https://www.google.com)
+[![고양이](https://hyunwoo1123.github.io/assets/img/markdown/cat.jpeg)](https://www.google.com)
 
 
 위 고양이 이미지를 클릭하면 구글 홈페이지로 연결됩니다.
