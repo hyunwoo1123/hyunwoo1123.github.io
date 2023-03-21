@@ -441,7 +441,46 @@ egov framework의 java 파일들에는 `@` 로 시작하는 다양한 `Annotatio
 * @Repository
     - 데이터베이스 접근을 위한 클래스에 선언한다.
 
+# 전자정부 표준프레임워크의 전체 구조
+
+이제 본격적으로 `Client`, `Server`, `Database`가 서로 연결되어 정보를 제공하는, 하나의 구조를 갖춰가고 있다.
+
+따라서 본 실습에 앞서 전자정부 표준프레임워크의 전체적인 서비스 구조와 [mvc 패턴](#)이 어떤 방식으로 적용되는지 알아야한다.
+
+전자정부 표준 프레임워크의 동작 구조를 가장 간단하게 표현하자면 다음과 같다.
+
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov0.svg)
+
+사용자가 `url`을 통해 요청을 하면, `Controller`에서 그것을 캐치하여 그에 맞는 `Data`를 반환한다. 아주 쉽고 깔끔하다.
+
+이걸 조금 더 자세하게 표현해보자
+
+`사용자`가 `url`을 통해 요청할 때, 예를 들어 `로그인`을 하려 한다면 자신의 `id, password`를 함께 전달할 것이다.
+
+이렇게 `사용자`가 `url`과 더불어 다양한 `data`들을 보내면, `Controller`는 그 Data들을 VO(Value Object)를 통해 한번에 묶어서 받게 된다.
+
+이걸 위 그림에 추가하여 표현한다면 다음과 같다.
+
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov1.svg)
+
+그 후 Controller에서는, `해당 id, password가 올바른 값이 들어왔는지 확인하고, Database에 연결하여 해당 계정이 Database에 존재하는지 확인하는 등 복잡한 과정`을 거쳐, 그 결과를 사용자에게 보낼 것이다.
+
+이 `복잡한 과정`이라 표현한 부분을 우선 뭉뚱그려 `Service`라고 표현하자.(MVC 패턴에서는 이 `Service`를 `Model` 이라 표현한다.)
+
+이걸 다시 그림에 추가하면 다음과 같다.
+
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov2.svg)
+
+
+이제 이 `Service` 내부에서는 어떤 일이 일어나고있는지 더 자세히 알아보자.
+
+
+
+
+
 # 데이터베이스 연결하기(Database[Postgresql])
+
+이제 이 db를 연결하고, 정보를 입력/출력하는 예제를 만들어보자.
 
 Postgresql을 설치하고, `test_db`를 만들고, 그 내부에 테스트용으로 `books` 라는 테이블을 아래와 같은 sql으로 만들었다.
 
@@ -462,20 +501,5 @@ insert into books(title,primary_author) values ('해리포터','조엔롤링');
 insert into books(title,primary_author) values ('노인과 바다','헤밍웨이');
 insert into books(title,primary_author) values ('코스모스','칼 세이건');
 ```
-
-이제 이 db를 연결하고, 정보를 입력/출력하는 예제를 만들어보자.
-
-이제 본격적으로 `client`, `server`, `database`가 서로 연결되어 정보를 제공하는, 하나의 `서비스`의 형태를 갖춰가고 있다.
-
-따라서 본 실습에 앞서 전자정부 표준프레임워크의 전체적인 서비스 구조와 [mvc 패턴](#)이 어떤 방식으로 적용되는지 알아야한다.
-
-전자정부 표준 프레임워크는 MVC 패턴에 따라 다음과 같은 구조로 동작한다.
-
-![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov1.svg)
-
-사용자가 `url`을 통해 요청을 하면, `Controller`에서 그것을 캐치하여 그에 맞는 `Data`를 반환한다.
-
-그 `Data`는 `jsp`파일이 될 수도 있고, `Text` 혹은 `File`일 수도 있다.
-
 
 
