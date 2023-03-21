@@ -472,8 +472,21 @@ egov framework의 java 파일들에는 `@` 로 시작하는 다양한 `Annotatio
 ![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov2.svg)
 
 
+그림에서는 `VO`를 더 그려넣진 않았으나, 내부적으로 데이터를 공유하거나 이동시킬때에도 `VO`를 사용하고 있다고 이해하면 된다.
+
 이제 이 `Service` 내부에서는 어떤 일이 일어나고있는지 더 자세히 알아보자.
 
+Service에는 해당 Service가 어떤 기능을 수행하는지에 대한 morkup인 `interface`,
+
+그 interface의 기능을 실제로 구현하는 class인 `impl`,
+
+그리고 데이터베이스와의 연결 부분을 담당하는, `sql`문을 호출하는 `DAO`,
+
+그리고 그 `sql`들을 선언해 둔 `.xml` 파일이 있다.
+
+이것까지 추가하면 최종적으로 다음과 같은 그림이 된다.
+
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov3.svg)
 
 
 
@@ -501,5 +514,8 @@ insert into books(title,primary_author) values ('해리포터','조엔롤링');
 insert into books(title,primary_author) values ('노인과 바다','헤밍웨이');
 insert into books(title,primary_author) values ('코스모스','칼 세이건');
 ```
+
+
+sql.xml은 mybatis 문법을 사용한다... 요거 사용법 추가하자...
 
 
