@@ -441,5 +441,41 @@ egov framework의 java 파일들에는 `@` 로 시작하는 다양한 `Annotatio
 * @Repository
     - 데이터베이스 접근을 위한 클래스에 선언한다.
 
+# 데이터베이스 연결하기(Database[Postgresql])
+
+Postgresql을 설치하고, `test_db`를 만들고, 그 내부에 테스트용으로 `books` 라는 테이블을 아래와 같은 sql으로 만들었다.
+
+postgresql 관련 설치 및 사용법은 [링크 참고](#)
+
+```sql
+CREATE TABLE books (
+  id              SERIAL PRIMARY KEY,
+  title           VARCHAR(100) NOT NULL,
+  primary_author  VARCHAR(100) NULL
+);
+```
+
+그리고 더미 데이터를 조금 insert 한다.
+
+```sql
+insert into books(title,primary_author) values ('해리포터','조엔롤링');
+insert into books(title,primary_author) values ('노인과 바다','헤밍웨이');
+insert into books(title,primary_author) values ('코스모스','칼 세이건');
+```
+
+이제 이 db를 연결하고, 정보를 입력/출력하는 예제를 만들어보자.
+
+이제 본격적으로 `client`, `server`, `database`가 서로 연결되어 정보를 제공하는, 하나의 `서비스`의 형태를 갖춰가고 있다.
+
+따라서 본 실습에 앞서 전자정부 표준프레임워크의 전체적인 서비스 구조와 [mvc 패턴](#)이 어떤 방식으로 적용되는지 알아야한다.
+
+전자정부 표준 프레임워크는 MVC 패턴에 따라 다음과 같은 구조로 동작한다.
+
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov1.svg)
+
+사용자가 `url`을 통해 요청을 하면, `Controller`에서 그것을 캐치하여 그에 맞는 `Data`를 반환한다.
+
+그 `Data`는 `jsp`파일이 될 수도 있고, `Text` 혹은 `File`일 수도 있다.
+
 
 
