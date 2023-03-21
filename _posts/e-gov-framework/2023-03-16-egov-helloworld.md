@@ -489,6 +489,7 @@ Service에는 해당 Service가 어떤 기능을 수행하는지에 대한 morku
 ![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov3.svg)
 
 
+TODO 각 기능들에 대한 링크 달아두고 상세한 설명 더 추가하기
 
 
 # 데이터베이스 연결하기(Database[Postgresql])
@@ -516,6 +517,6 @@ insert into books(title,primary_author) values ('코스모스','칼 세이건');
 ```
 
 
-sql.xml은 mybatis 문법을 사용한다... 요거 사용법 추가하자...
+TODO sql.xml은 mybatis 문법을 사용한다... 요거 사용법 추가하자...
 
 
