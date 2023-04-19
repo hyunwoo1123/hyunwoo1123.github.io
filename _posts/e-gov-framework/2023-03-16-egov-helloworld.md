@@ -555,7 +555,7 @@ xml 파일 : `Book_SQL.xml` 추가
 		</dependency>
 ```
 
-`BookService.java`
+`BookService.java` 위치 : src/main/java/egovframework.example.sample.service
 ```java
 package egovframework.example.sample.service;
 import java.util.List;
@@ -568,7 +568,7 @@ public interface BookService {
 Service 파일이기때문에, Book에 해당하는 기능인 selectBookList 기능에 어떤 파라미터를 사용하고, 어떤 값을 받아오는지에 대하여 정의한다.
 
 
-`BookVO.java`
+`BookVO.java` 위치 : src/main/java/egovframework.example.sample.service
 ```java
 package egovframework.example.sample.service;
 
@@ -603,7 +603,7 @@ public class BookVO {
 DB에서 받아올 column name들과, 출력될 때 어떻게 출력될지에 대하여 toString을 정의하였다.
 
 
-`BookMapper.java`
+`BookMapper.java` 위치 : src/main/java/egovframework.example.sample.service.impl
 ```java
 package egovframework.example.sample.service.impl;
 
@@ -626,7 +626,7 @@ public interface BookMapper {
 SQL을 호출하는 BookMapper이다. 우선 select 기능만 만들어볼 것이므로 selectBookList 기능 하나만 작성하였다.
 
 
-`sql-mapper-config.xml`
+`sql-mapper-config.xml` 위치 : src/main/resources/egovframework/sqlmap/example
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
@@ -644,8 +644,12 @@ SQL을 호출하는 BookMapper이다. 우선 select 기능만 만들어볼 것�
 
 기존 샘플 파일의 나머지 VO들에 대한 링크를 우선 유지하고, `bookVO`를 추가로 링크시켰다. 이를 통해 아래에 추가할 `Book_SQL.xml`에서 `bookVO`를 활용할 수 있게 된다.
 
+폴더 위치 마지막에 `example`이 들어있는데, 이는 단순히 example코드의 기본 폴더구조를 유지한 채 기능을 추가하기 때문이다.
 
-`Book_SQL.xml`
+sql 관련 폴더에 대한 링크 정보는 src/main/resources/egovframework/spring/context-mapper에서 변경이 가능하다
+
+
+`Book_SQL.xml` 위치 : src/main/resources/egovframework/sqlmap/example/mappers
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 
@@ -668,7 +672,7 @@ mapper의 namespace가 본 프로젝트 내 이 기능을 수행할 BookMapper�
 resultType에 들어가는 VO 역시 위 `sql-mapper-config.xml`에서 링크한 VO alias와 정확하게 링크해주어야 한다.
 
 
-`BookServiceImpl.java`
+`BookServiceImpl.java` 위치 : src/main/java/egovframework.example.sample.service.impl
 ```java
 package egovframework.example.sample.service.impl;
 
@@ -696,7 +700,7 @@ public class BookServiceImpl implements BookService {
 `BookService`를 구현하는 Impl이다. 
 
 
-`BookController.java`
+`BookController.java` 위치 : src/main/java/egovframework.example.sample.service.web
 ```java
 package egovframework.example.sample.web;
 
@@ -730,7 +734,7 @@ public class BookController {
 bookservice를 선언하고, `booklist.do`라는 url을 누군가 요청했을 시, 해당 service를 통해 값을 호출하여 model을 사용하여 jsp파일로 값을 전달한다.
 
 
-`booklist.jsp`
+`booklist.jsp` 위치 : src/main/webapp
 ```jsp
 <%@ page language="java" isELIgnored="false" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
@@ -745,7 +749,9 @@ bookservice를 선언하고, `booklist.do`라는 url을 누군가 요청했을 �
 </html>
 ```
 
-가장 단순한 형태로 서버에서 받아온 책 리스트 정보를 출력한다.
+가장 단순한 형태로 서버에서 받아온 책 리스트 정보를 출력한다. 편의상 index.jsp와 동일한 디렉토리로 위치시켰다.
+
+따라서 jsp 기본 디렉토리를 web.xml에서 수정해주어야 한다.
 
 
 `web.xml` 수정
@@ -757,7 +763,7 @@ bookservice를 선언하고, `booklist.do`라는 url을 누군가 요청했을 �
 
 최종적으로 서버를 실행 후 url에 접속하면
 
-```
+```markdown
 [BookVO [primary_author=조엔롤링, title=해리포터, id=1], BookVO [primary_author=헤밍웨이, title=노인과 바다, id=2], BookVO [primary_author=칼 세이건, title=코스모스, id=3]]
 ```
 
