@@ -71,7 +71,7 @@ Finish 버튼이 활성화되면, 클릭하여 설치를 완료한다.
 
 ![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-make-new-project6.png)
 
-서버가 실행되는 중 Fatal 오류를 포함하여 여러 오류들이 뜨지만, 서버는 정상적으로 실행된다. 다음과같은 화면이 최종적으로 출력된다.
+다음과같은 화면이 최종적으로 출력된다.
 
 ![egov-make-new-project예제사진](https://hyunwoo1123.github.io/assets/img/egov/egov-make-new-project7.png)
 

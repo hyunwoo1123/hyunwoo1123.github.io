@@ -445,11 +445,22 @@ egov framework의 java 파일들에는 `@` 로 시작하는 다양한 `Annotatio
 
 이제 본격적으로 `Client`, `Server`, `Database`가 서로 연결되어 정보를 제공하는, 하나의 구조를 갖춰가고 있다.
 
-따라서 본 실습에 앞서 전자정부 표준프레임워크의 전체적인 서비스 구조와 [mvc 패턴](#)이 어떤 방식으로 적용되는지 알아야한다.
+따라서 이후 실습에 앞서 전자정부 표준프레임워크의 **전체적인 서비스 구조**와 [mvc 패턴](#)이 어떤 방식으로 적용되는지 알아야한다.
+
+## 빌드
+
+빌드 단계에서 기본적으로 구성된 복잡한 파일트리가 있지만, 간략하게 필요한 부분들이 어떻게 서로 연결되어있고 어떤 기능이 있는지 표현한다면 다음과 같다.
+
+![egov 빌드단계 파일들](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov_build.png)
+
+
+
+
+## MVC(Model, View, Controller) 구조
 
 전자정부 표준 프레임워크의 동작 구조를 가장 간단하게 표현하자면 다음과 같다.
 
-![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov0.svg)
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov_1.png)
 
 사용자가 `url`을 통해 요청을 하면, `Controller`에서 그것을 캐치하여 그에 맞는 `Data`를 반환한다. 아주 쉽고 깔끔하다.
 
@@ -461,35 +472,26 @@ egov framework의 java 파일들에는 `@` 로 시작하는 다양한 `Annotatio
 
 이걸 위 그림에 추가하여 표현한다면 다음과 같다.
 
-![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov1.svg)
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov_2.png)
 
 그 후 Controller에서는, `해당 id, password가 올바른 값이 들어왔는지 확인하고, Database에 연결하여 해당 계정이 Database에 존재하는지 확인하는 등 복잡한 과정`을 거쳐, 그 결과를 사용자에게 보낼 것이다.
 
-이 `복잡한 과정`이라 표현한 부분을 우선 뭉뚱그려 `Service`라고 표현하자.(MVC 패턴에서는 이 `Service`를 `Model` 이라 표현한다.)
-
-이걸 다시 그림에 추가하면 다음과 같다.
-
-![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov2.svg)
-
-
-그림에서는 `VO`를 더 그려넣진 않았으나, 내부적으로 데이터를 공유하거나 이동시킬때에도 `VO`를 사용하고 있다고 이해하면 된다.
-
-이제 이 `Service` 내부에서는 어떤 일이 일어나고있는지 더 자세히 알아보자.
+이 `복잡한 과정`이라 표현한 부분을 `Service`라고 표현한다.(MVC 패턴에서는 이 `Service`를 `Model` 이라 표현한다.)
 
 Service에는 해당 Service가 어떤 기능을 수행하는지에 대한 morkup인 `interface`,
 
 그 interface의 기능을 실제로 구현하는 class인 `impl`,
 
-그리고 데이터베이스와의 연결 부분을 담당하는, `sql`문을 호출하는 `DAO`,
+그리고 데이터베이스와의 연결 부분을 담당하는, `sql`문을 호출하는 `Mapper`,
 
-그리고 그 `sql`들을 선언해 둔 `.xml` 파일이 있다.
+그리고 그 `SQL`들을 xml로 선언해 둔 파일이 있다.
 
 이것까지 추가하면 최종적으로 다음과 같은 그림이 된다.
 
-![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov3.svg)
+이걸 다시 그림에 추가하면 다음과 같다.
 
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov_3.png)
 
-TODO 각 기능들에 대한 링크 달아두고 상세한 설명 더 추가하기
 
 
 # 데이터베이스 연결하기(Database[Postgresql])
@@ -516,7 +518,257 @@ insert into books(title,primary_author) values ('노인과 바다','헤밍웨이
 insert into books(title,primary_author) values ('코스모스','칼 세이건');
 ```
 
+우리는 위에 설명한,
 
-TODO sql.xml은 mybatis 문법을 사용한다... 요거 사용법 추가하자...
+![egov mvc 구조도](https://hyunwoo1123.github.io/assets/img/egov/mvc/egov_3.png)
+
+를 따라 books에서 값을 가져와 화면에 출력시키는 예제를 만들어 볼 것이다.
+
+기본 example 전자정부프레임워크 web project에서 수정해야 하는 부분은,
+
+```markdown
+
+java 파일 :
+    - service package : `BookService.java`, `BookVO.java` 추가
+    - service.impl package : `BookService.java`를 상속받는 `BookServiceImpl.java` 추가, SQL을 호출하여 값을 받는 `BookMapper.java` 인터페이스 추가
+    - web package : `BookController.java` 추가
+
+jsp 파일 : `booklist.jsp` 추가
+
+xml 파일 : `Book_SQL.xml` 추가
+
+설정 파일 : 
+    `pom.xml` postgresql dependency 추가
+    `web.xml` 기본 호출 jsp 디렉토리 수정
+    `sql-mapper-config.xml` DB와 연결에 사용될 BookVO 링크
+
+```
+
+이다.
+
+우선 `pom.xml`에 postgresql dependency를 추가한다.
+```xml
+		<dependency>
+		    <groupId>postgresql</groupId>
+		    <artifactId>postgresql</artifactId>
+		    <version>9.1-901.jdbc4</version>
+		</dependency>
+```
+
+`BookService.java`
+```java
+package egovframework.example.sample.service;
+import java.util.List;
+
+public interface BookService {
+	public List<BookVO> selectBookList(BookVO vo) throws Exception;
+}
+```
+
+Service 파일이기때문에, Book에 해당하는 기능인 selectBookList 기능에 어떤 파라미터를 사용하고, 어떤 값을 받아오는지에 대하여 정의한다.
+
+
+`BookVO.java`
+```java
+package egovframework.example.sample.service;
+
+public class BookVO {
+	public String getPrimary_author() {
+		return primary_author;
+	}
+	public void setPrimary_author(String author) {
+		this.primary_author = author;
+	}
+	public String getTitle() {
+		return title;
+	}
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	@Override
+	public String toString() {
+		return "BookVO [primary_author=" + primary_author + ", title=" + title + ", id=" + id + "]";
+	}
+	private String primary_author, title;
+	private int id; 
+}
+```
+
+DB에서 받아올 column name들과, 출력될 때 어떻게 출력될지에 대하여 toString을 정의하였다.
+
+
+`BookMapper.java`
+```java
+package egovframework.example.sample.service.impl;
+
+import java.util.List;
+
+import egovframework.example.sample.service.BookVO;
+import egovframework.example.sample.service.SampleDefaultVO;
+import egovframework.example.sample.service.SampleVO;
+
+import org.egovframe.rte.psl.dataaccess.mapper.Mapper;
+
+@Mapper("bookMapper")
+public interface BookMapper {
+
+	List<BookVO> selectBookList(BookVO vo) throws Exception;
+}
+
+```
+
+SQL을 호출하는 BookMapper이다. 우선 select 기능만 만들어볼 것이므로 selectBookList 기능 하나만 작성하였다.
+
+
+`sql-mapper-config.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    <typeAliases>
+		<typeAlias alias="egovMap" type="org.egovframe.rte.psl.dataaccess.util.EgovMap"/>
+		<typeAlias alias="searchVO" type="egovframework.example.sample.service.SampleDefaultVO"/>
+		<typeAlias alias="sampleVO" type="egovframework.example.sample.service.SampleVO"/>
+		<typeAlias alias="bookVO" type="egovframework.example.sample.service.BookVO"/>
+
+    </typeAliases>
+</configuration>
+```
+
+기존 샘플 파일의 나머지 VO들에 대한 링크를 우선 유지하고, `bookVO`를 추가로 링크시켰다. 이를 통해 아래에 추가할 `Book_SQL.xml`에서 `bookVO`를 활용할 수 있게 된다.
+
+
+`Book_SQL.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="egovframework.example.sample.service.impl.BookMapper">
+
+	<select id="selectBookList" resultType="bookVO">
+		select * from books
+	</select>
+
+</mapper>
+```
+
+mybatis 방식을 사용한다고 명시하고, mapper를 작성한다. 이때 중요한 것은, namespace, id를 통해 위에 작성한 BookMapper.java 파일과 연결되어야 하므로,
+
+mapper의 namespace가 본 프로젝트 내 이 기능을 수행할 BookMapper의 위치를 정확하게 일치시켜야 하고, select문의 id도 함수명과 일치시켜야 하며,
+
+resultType에 들어가는 VO 역시 위 `sql-mapper-config.xml`에서 링크한 VO alias와 정확하게 링크해주어야 한다.
+
+
+`BookServiceImpl.java`
+```java
+package egovframework.example.sample.service.impl;
+
+import java.util.List;
+import javax.annotation.Resource;
+import org.springframework.stereotype.Service;
+import egovframework.example.sample.service.BookService;
+import egovframework.example.sample.service.BookVO;
+
+@Service("bookService")
+public class BookServiceImpl implements BookService {
+	
+	@Resource(name = "bookMapper")
+	private BookMapper bookMapper;
+	
+	@Override
+	public List<BookVO> selectBookList(BookVO vo) throws Exception {
+		// TODO Auto-generated method stub
+		return bookMapper.selectBookList(vo);
+	}
+
+}
+```
+
+`BookService`를 구현하는 Impl이다. 
+
+
+`BookController.java`
+```java
+package egovframework.example.sample.web;
+
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import egovframework.example.sample.service.BookService;
+import egovframework.example.sample.service.BookVO;
+
+@Controller
+public class BookController {
+	
+	@Resource(name="bookService")
+	private BookService bookservice;
+	
+	@RequestMapping(value="booklist.do")
+	public String selectBookList(BookVO vo,Model model) throws Exception {
+		
+		List<BookVO> list = bookservice.selectBookList(vo);
+		model.addAttribute("bookList", list);
+		return "booklist";
+	}
+}
+```
+
+bookservice를 선언하고, `booklist.do`라는 url을 누군가 요청했을 시, 해당 service를 통해 값을 호출하여 model을 사용하여 jsp파일로 값을 전달한다.
+
+
+`booklist.jsp`
+```jsp
+<%@ page language="java" isELIgnored="false" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>책 리스트</title>
+</head>
+<body>
+	${bookList}
+</body>
+</html>
+```
+
+가장 단순한 형태로 서버에서 받아온 책 리스트 정보를 출력한다.
+
+
+`web.xml` 수정
+
+49번째 줄의 jsp파일 기본 위치를 `/` 으로 바꾸어준다.
+
+
+
+
+최종적으로 서버를 실행 후 url에 접속하면
+
+```
+[BookVO [primary_author=조엔롤링, title=해리포터, id=1], BookVO [primary_author=헤밍웨이, title=노인과 바다, id=2], BookVO [primary_author=칼 세이건, title=코스모스, id=3]]
+```
+
+가 출력된다면 성공이다!
+
+# Ibatis
+
+Ibatis의 동작구조
+
+
+
+# Mybatis
 
 
