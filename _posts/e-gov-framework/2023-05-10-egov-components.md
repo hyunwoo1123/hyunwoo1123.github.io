@@ -4,7 +4,7 @@ categories: [egov]
 tags: [egov]     # TAG names should always be lowercase
 ---
 
-본 문서는 전자정부 표준프레임워크 4.1 버전의 공통 컴포넌트 all_in_one의 설치 및 세팅을 가이드하는 문서이다. [공식 문서](https://www.egovframe.go.kr/wiki/doku.php?id=egovframework:dev4.1:imp:editor:common_component)대로 하면 삽질을 많이 하게된다.
+본 문서는 전자정부 표준프레임워크 4.1 버전의 공통 컴포넌트 all_in_one의 설치 및 세팅을 가이드하는 문서이다. [공식 문서](https://www.egovframe.go.kr/wiki/doku.php?id=egovframework:dev4.1:imp:editor:common_component)대로 따라하면 삽질을 많이 하게된다.
 
 **전자정부 프레임워크 개발환경 설치 가이드**는 [이곳](https://hyunwoo1123.github.io/posts/egov-install/)에서,
 
@@ -17,7 +17,6 @@ tags: [egov]     # TAG names should always be lowercase
 * 공통컴포넌트는 정보시스템 구축시 공통적으로 재사용이 가능한 기능위주로 개발한 컴포넌트의 집합
 * 공통컴포넌트는 표준프레임워크 기반으로 실행환경의 MVC아키텍처를 준수하여 설계 및 개발
 * 전자정부사업에서 쉽게 커스트마이징하여 재사용할수 있도록 전자정부 표준프레임워크 포털(www.egovframe.go.kr)을 통해 소스코드와 가이드를 제공
-* 빌드 및 실행
 
 ![공통 컴포넌트 공식설명 이미지](https://hyunwoo1123.github.io/assets/img/egov/all_in_one_1.png)
 
@@ -33,6 +32,7 @@ tags: [egov]     # TAG names should always be lowercase
 * Project에 Import
 * Database에 Table, 샘플 데이터 추가
 * Database 연결정보 설정
+* 빌드 및 실행
 
 ## 공통 컴포넌트 다운로드
 
