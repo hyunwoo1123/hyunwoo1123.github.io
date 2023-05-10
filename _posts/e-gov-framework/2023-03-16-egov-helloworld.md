@@ -751,10 +751,10 @@ bookservice를 선언하고, `booklist.do`라는 url을 누군가 요청했을 �
 
 가장 단순한 형태로 서버에서 받아온 책 리스트 정보를 출력한다. 편의상 index.jsp와 동일한 디렉토리로 위치시켰다.
 
-따라서 jsp 기본 디렉토리를 web.xml에서 수정해주어야 한다.
+따라서 jsp 기본 디렉토리를 dispatcher-servlet.xml에서 수정해주어야 한다.
 
 
-`web.xml` 수정
+`dispatcher-servlet.xml` 수정
 
 49번째 줄의 jsp파일 기본 위치를 `/` 으로 바꾸어준다.
 
