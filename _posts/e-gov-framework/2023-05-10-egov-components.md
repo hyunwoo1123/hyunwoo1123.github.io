@@ -306,14 +306,15 @@ password만 암호화하면 되기때문에, 16번째 줄의 데이터베이스 
 ------------------------------------------------------
 ```
 
-이 값을 확인한 후, **반드시** 다시 `context-crypto.xml`에 추가했던 `messageSource` 관련 내용을 전부 제거하고 원래 상태로 되돌려놓아야 한다. 
+이 값을 확인한 후, **반드시** 다시 `context-crypto.xml`에 추가했던 `messageSource` 관련 내용을 전부 **제거**하고 **원래 상태로 되돌려놓아야 한다**. 
 
-이는 원래 해당 설정이 `context-common.xml`에 존재하기 때문으로, 만약 지우지 않으면 서로 충돌이 발생하여 서버가 정상적으로 실행되지 않는다.
+이는 원래 해당 설정이 `context-common.xml`에 존재하기 때문으로, 만약 지우지 않으면 서로 **충돌**이 발생하여 서버가 정상적으로 실행되지 않는다.
 
 
 ### globals.properties 정보 수정
 
 그 후, `EgovEnvCryptoUserTest.java`의 사용자 비밀번호 인코딩 결과값을 복사하여 globals.properties의 postgres 관련 항목에 입력하고, userid,url을 각자의 설정과 이름에 맞게 수정한다.
+
 (위치 : 프로젝트/src/main/resources/egovframework/egovProps/globals.properties)
 
 또한 Globals.DbType(20번째 줄)의 값을 postgres로 수정하고, Globals.OsType도 각자의 운영서버 타입에 맞는 값으로 수정한다.
