@@ -4,7 +4,7 @@ categories: [egov]
 tags: [egov]     # TAG names should always be lowercase
 ---
 
-본 문서는 전자정부 표준프레임워크 4.1 버전의 공통 컴포넌트 all_in_one의 설치 및 세팅을 가이드하는 문서이다.
+본 문서는 전자정부 표준프레임워크 4.1 버전의 공통 컴포넌트 all_in_one의 설치 및 세팅을 가이드하는 문서이다. [공식 문서](https://www.egovframe.go.kr/wiki/doku.php?id=egovframework:dev4.1:imp:editor:common_component)대로 하면 삽질을 많이 하게된다.
 
 **전자정부 프레임워크 개발환경 설치 가이드**는 [이곳](https://hyunwoo1123.github.io/posts/egov-install/)에서,
 
