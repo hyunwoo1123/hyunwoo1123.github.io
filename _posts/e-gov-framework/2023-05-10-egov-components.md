@@ -525,8 +525,12 @@ db를 연결하는 부분 중 postgres를 제외한, 다른 db 연결을 모두 
 
 이로서 database 생성, 연결 설정까지 모두 마쳤다.
 
-마지막으로, **Maven Update project**를 실행하고, **Maven Install**을 진행하여 필요한 dependency를 설치하고 빌드한다.
+dependency 설치 및 빌드를 위해,
 
-그후 본 프로젝트를 Tomcat server [(Tomcat 설치 튜토리얼 참고)](https://hyunwoo1123.github.io/posts/egov-install)로 실행하면, 다음과 같은 화면이 출력된다!
+우선 프로젝트명을 마우스 우클릭하여 Maven > Update Project… > Force Update of Snapshots/Releases 체크 후 Update를 실행한다.
+
+완료되면, 프로젝트명을 마우스 우클릭하여 run as > maven install을 실행한다.
+
+마지막으로 그후 본 프로젝트를 Tomcat server [(Tomcat 설치 튜토리얼 참고)](https://hyunwoo1123.github.io/posts/egov-install)로 실행하면, 다음과 같은 화면이 출력된다!
 
 ![공통 컴포넌트 튜토리얼 이미지](https://hyunwoo1123.github.io/assets/img/egov/egov_components_result.png)
