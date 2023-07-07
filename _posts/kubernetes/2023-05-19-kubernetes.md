@@ -57,7 +57,28 @@ TODO
 
 ## Dockerfile
 
-TODO
+예제 : 
+
+```
+FROM node:12-alpine
+RUN apk add --no-cache python3 g++ make
+WORKDIR /app
+COPY . .
+RUN yarn install --production
+CMD ["node", "src/index.js"]
+```
+
+* FROM: 베이스 이미지이다. 간단하게 말해 OS라고 생각하면 되며, 참고로 Alpine은 매우 작은 Linux 배포판인 Alpine Linux를 기반으로 하는 기본 이미지이다. node:12-alpine의 의미는 노드 12에 설치된 알파인 기반 이미지를 의미하며, node:alpine 사용시 최신 버전의 알파인을 사용할 수 있다. 지금은 테스트이기 때문에 무거운 베이스 이미지 대신 알파인을 사용한 것이다.)
+* RUN: 도커 이미지가 생성되기 전에 수행할 쉘 명령어이다.
+* WORKDIR: WORKDIR 지시자는 도커 파일에서 리눅스 명령어의 cd와 유사하게 뒤에 오는 모든 지시자(RUN, CMD, COPY, ADD 등)에 대한 작업 디렉토리를 설정한다. 특히 원래 최상위 파일이나 폴더에 있던 이름과 COPY해오는 파일이나 폴더의 이름이 같은게 있다면, 기존에 파일을 덮어쓰게되어 문제가 생길 수 있으며, 최상위 폴더에 모두 있을 경우 가독성 또한 좋지 않다.
+* COPY: Docker클라이언트의 현재 디렉토리에서 파일을 추가한다. (COPY (source) (dist)). WORKDIR를 별도로 지정했다면 로컬에 있는 파일들이 도커 컨테이너로 복사될때 WORKDIR에 정의한 디렉토리로 복사된다.
+* CMD: 컨테이너 내에서 실행할 명령을 지정하며, 도커 파일 내에서 한 번만 사용할 수 있다.
+
+```
+$ docker build -t getteing-started .
+```
+
+
 
 ## Docker Hub
 
@@ -83,5 +104,39 @@ TODO
 TODO
 
 
+# 쿠버네티스(Kubernetes)
 
+클라우드 계의 리눅스라 불림.
+
+어떤 OS를 쓰느냐와 상관없이 Kubernetes로 다 굴러감.
+
+## 쿠버네티스의 아키텍처
+
+Master - Node 구조
+
+### Kubectl
+
+### Master
+
+
+#### Kube Controller
+
+#### API Server
+
+#### Scheduler
+
+
+### Node
+
+#### Kublet
+
+#### Docker
+
+
+
+## Object
+
+## State
+
+## YAML
 
