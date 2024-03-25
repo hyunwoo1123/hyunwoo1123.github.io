@@ -113,6 +113,23 @@ sudo pip install -r requirements.txt
 
 ## master node의 ssh key 생성 및 다른 node들에 copy
 
+이제부터 매우 중요한 내용이며, 필자가 삽질을 매우 길게 한 부분임.
+
+지금 실행할 것은 아니지만, 있다가 최종적으로 세팅이 완료된 후에 실행할 명령어는
+
+`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml` 임.
+
+이 명령어가 정상적으로 동작하는 조건은 다음과 같음
+
+1. 명령어를 실행하는 master node에서, inventory.ini에 적어둔 모든 노드의 ip들에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능할 것
+2. 그렇게 접근한 유저가 sudo 명령어를 비밀번호 입력 없이 실행할 수 있을 것
+
+따라서 1번부터 하나씩 차근차근 설정해보자.
+
+### 명령어를 실행하는 master node에서, inventory.ini에 적어둔 모든 노드의 ip들에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능하도록 설정
+
+ssh-key를 생성하고 대상 노드들에 복사한다.
+
 ```
 ssh-keygen
 ssh-copy-id 워커노드1ip
@@ -121,7 +138,6 @@ ssh-copy-id 워커노드3ip
 
 
 ```
-
 
 master에서 ssh로 타 node들에 비밀번호 없이 접속되는지 확인
 
@@ -132,26 +148,125 @@ ssh 워커노드3ip
 
 ```
 
-## kubespray 설정(inventory.ini 혹은 host.yaml 사용)
+### 각 노드의 해당 user가 sudo 명령어를 비밀번호 입력 없이 실행할 수 있도록 설정
+
+각 노드에서, 다음 명령어로 파일을 연다
+
+`sudo visudo /etc/sudoers`
+
+그러면 다음과 같이 파일 내용이 나온다.
+
+```
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# Please consider adding local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+#
+# See the man page for details on how to write a sudoers file.
+#
+Defaults        env_reset
+Defaults        mail_badpass
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+Defaults        use_pty
+
+# This preserves proxy settings from user environments of root
+# equivalent users (group sudo)
+#Defaults:%sudo env_keep += "http_proxy https_proxy ftp_proxy all_proxy no_proxy"
+
+# This allows running arbitrary commands, but so does ALL, and it means
+# different sudoers have their choice of editor respected.
+#Defaults:%sudo env_keep += "EDITOR"
+
+# Completely harmless preservation of a user preference.
+#Defaults:%sudo env_keep += "GREP_COLOR"
+
+# While you shouldn't normally run git as root, you need to with etckeeper
+#Defaults:%sudo env_keep += "GIT_AUTHOR_* GIT_COMMITTER_*"
+
+# Per-user preferences; root won't have sensible values for them.
+#Defaults:%sudo env_keep += "EMAIL DEBEMAIL DEBFULLNAME"
+
+# "sudo scp" or "sudo rsync" should be able to use your SSH agent.
+#Defaults:%sudo env_keep += "SSH_AGENT_PID SSH_AUTH_SOCK"
+
+# Ditto for GPG agent
+#Defaults:%sudo env_keep += "GPG_AGENT_INFO"
+
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+# User privilege specification
+root    ALL=(ALL:ALL) NOPASSWD:ALL
+
+# Members of the admin group may gain root privileges
+%admin ALL=(ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL
+# See sudoers(5) for more information on "@include" directives:
+
+@includedir /etc/sudoers.d
+```
+
+이 중 중요한 내용은 밑에있는 두 줄,
+
+`%sudo   ALL=(ALL:ALL) ALL` 와 `@includedir /etc/sudoers.d` 이다.
+
+이 부분에서 `%sudo   ALL=(ALL:ALL) ALL` 다음 줄에, 다음 내용을 추가해야 한다.
+
+`유저이름 ALL=(ALL) NOPASSWD:ALL`
+
+`%sudo   ALL=(ALL:ALL) ALL` 보다 아래에 위치에 추가하는 이유는, 아마도 이 유저가 이미 sudo group 소속일텐데, `%sudo   ALL=(ALL:ALL) ALL` 보다 위에 저 내용을 추가해버리면, 더 아래줄에 적힌 내용이 덮어씌워져버리므로 의미가 없어져버리기 때문이다.
+
+하지만 위 방법처럼 추가하지 말고, 왠만하면 `@includedir /etc/sudoers.d` 부분을 활용하는 것이 좋다. 
+
+sudoers.d 디렉토리는 유저가 다양할 때 파일로 나누어 관리하기 위한 것으로, 유저가 많을 시 본 가이드에서 아까 제시한 방식 대신 이 방법으로 관리하는것이 적극 권장된다.
+
+따라서 해당 디렉토리 내에 해당 유저명 혹은 그룹명으로 파일을 만들어 그 안에 관련 설정들을 넣어 관리하는것이 좋다.
+
+이번 예시의 경우라면, 필자의 유저명은 `test`이므로,
+
+test 라는 파일을 만들고, 내부에 `test ALL=(ALL) NOPASSWD:ALL` 라는 내용을 추가하면 된다.
+
+물론 파일명은 `~` 혹은 `.` 으로 시작하지않는 모든 파일을 포함하기때문에 편하게 만들어도된다.
+
+
+그리고 가능은 되지만 하지 말아야 할 방법을 소개하겠다.
+
+아마 이미 해당 유저가 sudo 그룹에 소속되어으니, `%sudo   ALL=(ALL:ALL) ALL` 부분을
+
+`%sudo   ALL=(ALL:ALL) NOPASSWD:ALL`
+
+로 수정한다면 sudo group에 포함된 모든 사용자가 비밀번호 없이 사용이 가능할 것이다. 하지만 모든 sudo 그룹 사용자가 이렇게 되는 것 보단 위 방법이 좋으니, 그렇게 하자.
+
+
+## kubespray 설정(inventory.ini 혹은 hosts.yaml 사용)
+
+본 예시에서는 inventory.ini를 사용하겠다. kubespray 디렉토리 위치에서, 다음 명령들을 순서대로 실행한다.
 
 ```
 cp -rfp inventory/sample/ inventory/mycluster
 cd inventory/mycluster
 declare -a IPS=(워커노드1ip 워커노드2ip 워커노드3ip)
-CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
+CONFIG_FILE=inventory/test-cluster/inventory.ini python3 contrib/inventory_builder/inventory.py ${IPS[@]}
 
 ```
 
+물론 위 워커노드 ip들은 실제 자신의 워커노드 ip에 맞게 설정해야 한다.
+
+이러고 나면 `inventory/test-cluster/inventory.ini` 파일을 열어보면 해당 사항들이 반영되어있는 것을 확인할 수 있을 것이다.
+
 ## ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
 
-`ansible-playbook -i inventory/test-cluster/hosts.yaml  --become --become-user=root cluster.yml
-`
+위 설정을 활용하여 노드들에 접속하고 연결하여 클러스터를 생성하는 명령어를 실행한다.(물론 아까와 동일하게 kubespray 디렉토리에서 입력)
+
+`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml`
 
 ## Rook 설치, 설정
 ## ceph 설정
 ## ceph 올리기
-
-
-
-
 
