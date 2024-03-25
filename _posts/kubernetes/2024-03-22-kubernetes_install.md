@@ -10,7 +10,10 @@ published : true
 
 ## 버전정보
 
-TODO
+OS : xUbuntu_22.04
+CRI-O : 1.26
+kubernetes : v1.25
+kuberspray : 2.24
 
 # 순서
 1. memory swap off
@@ -109,6 +112,7 @@ git clone https://github.com/kubernetes-sigs/kubespray.git
 cd kubespray/
 sudo pip install -r requirements.txt
 ```
+
 
 
 ## master node의 ssh key 생성 및 다른 node들에 copy
@@ -262,9 +266,61 @@ CONFIG_FILE=inventory/test-cluster/inventory.ini python3 contrib/inventory_build
 
 ## ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
 
-위 설정을 활용하여 노드들에 접속하고 연결하여 클러스터를 생성하는 명령어를 실행한다.(물론 아까와 동일하게 kubespray 디렉토리에서 입력)
+위 설정에 혹시 예전에 이미 클러스터를 만든게 있다면, 그걸 삭제하기 위해 다음 명령어를 실행한다.
+
+`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root reset.yml`
+
+그리고 클러스터를 생성하는 명령어를 실행한다.(물론 아까와 동일하게 kubespray 디렉토리에서 입력)
 
 `ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml`
+
+### 정상적으로 설치되었는지 확인
+
+```
+mkdir ~/.kube
+sudo cp /etc/kubernetes/admin.conf ~/.kube/config
+kubectl get nodes
+```
+
+이때, 다음과 같이 출력되면 정상적으로 설치 된 것이다.
+
+```
+NAME     STATUS   ROLES           AGE     VERSION
+master   Ready    control-plane   4h53m   v1.25.16
+node1    Ready    <none>          4h53m   v1.25.16
+node2    Ready    <none>          4h53m   v1.25.16
+```
+
+### Node를 더 추가하려면?
+
+kubernetes를 사용하는 것이니 당연히 Node를 추가하거나 줄일 일이 있을 수 있다. 이 경우, 다음과 같이 한다.
+
+1. inventory 수정
+2. (추가하는 경우)추가할 Node에도 해당 사용자가 sudo 명령어를 비밀번호 없이 사용할 수 있도록 설정
+3. ansible로 inventory의 수정사항을 반영하여 scale하기
+
+하나씩 보자
+
+#### inventory 수정
+
+```
+declare -a IPS=(ip1 ip2 ip3 ip4)
+CONFIG_FILE=inventory/mycluster/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
+
+
+```
+
+#### (추가하는 경우)추가할 Node에도 해당 사용자가 sudo 명령어를 비밀번호 없이 사용할 수 있도록 설정
+
+알아서 위에 작성된 가이드를 참고하여 설정하자.
+
+#### ansible로 inventory의 수정사항을 반영하여 scale하기
+
+다음 명령어를 통해 scale할 수 있다.
+
+`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root scale.yml`
+
+
 
 ## Rook 설치, 설정
 ## ceph 설정
