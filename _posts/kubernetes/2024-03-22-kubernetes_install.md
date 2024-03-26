@@ -270,7 +270,21 @@ CONFIG_FILE=inventory/test-cluster/inventory.ini python3 contrib/inventory_build
 
 `ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root reset.yml`
 
-그리고 클러스터를 생성하는 명령어를 실행한다.(물론 아까와 동일하게 kubespray 디렉토리에서 입력)
+이때 reset 혹은 을 했다면, 필자의 경우 이유는 모르지만 master node와 workder node중 하나의 도메인 서버 정보가 삭제되어 nslookup naver.com 등이 작동되지 않게 되는 현상이 있었다. 그런 경우,
+
+`sudo vi /etc/resolv.conf`
+
+를 열어, `nameserver 127.0.0.53` 의 다음에 두 줄을 추가하면 문제가 해결된다.
+
+```
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+```
+
+계속 진행하자.
+
+이제 클러스터를 생성하는 명령어를 실행한다.(물론 아까와 동일하게 kubespray 디렉토리에서 입력)
+
 
 `ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml`
 
