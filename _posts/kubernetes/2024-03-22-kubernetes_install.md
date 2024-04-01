@@ -12,21 +12,34 @@ published : true
 
 OS : xUbuntu_22.04
 CRI-O : 1.26
-kubernetes : v1.25
-kuberspray : 2.24
+kubernetes : v1.25.6
+kubespray : 2.21
 
 # 순서
+0. 설치할 각종 소프트웨어의 호환성 조사
 1. memory swap off
-2. cri-o 설치
+<!-- 2. cri-o 설치
 3. kubelet, kubeadm, kubectl 설치
-4. cri-o k8s 설정
-5. master node에 kubespray 설치
-6. master node의 ssh key 생성 및 다른 node들에 copy
-7. kubespray 설정(inventory.ini 혹은 host.yaml 사용)
-8. ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
-9. Rook 설치, 설정
-10. ceph 설정
-11. ceph 올리기
+4. cri-o k8s 설정 -->
+2. master node에 kubespray 설치
+3. master node의 ssh key 생성 및 다른 node들에 copy
+4. kubespray 설정(inventory.ini 혹은 host.yaml 사용)
+5. ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
+6. Rook 설치, 설정
+7. ceph 설정
+8. ceph 올리기
+
+## 설치할 각종 소프트웨어 호환성 조사
+
+무엇보다 가장 중요한 것은, 각 소프트웨어의 버전이 서로 호환되어야 한다는 것이다.
+
+필자의 경우 이를 확인하지 않고 설치하였는데, kubespray 2.2에서 설치하여 사용되는 calico의 버전이 kubernetes 1.25버전과 호환되지 않아 오랜 시간 헤맸다.
+
+이런 문제가 발생할 경우, 에러 로그가 엉뚱히 나와 직접적인 호환성과의 연관성을 찾기 매우 어려울 수 있으므로, 
+
+이를 방지하기 위해서 각 홈페이지에서 각 소프트웨어가 서로 어떤 버전이 호환되는지를 반드시 먼저 파악하고 정리한 후 시작해야 한다.
+
+그 예시로, (calico홈페이지)[https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements]의 `Kubernetes requirements` 탭에서, 호환되는 kubernetes의 버전을 확인할 수 있다.
 
 ## memory swap off
 
@@ -34,7 +47,7 @@ kuberspray : 2.24
 sudo swapoff -a
 ```
 
-## cri-o 설치
+<!-- ## cri-o 설치
 
 먼저, curl 설치 확인
 
@@ -109,7 +122,7 @@ EOF
 # Apply sysctl params without reboot
 sudo sysctl --system
 
-```
+``` -->
 
 ## master node에 kuberspray 설치
 
@@ -265,8 +278,8 @@ test 라는 파일을 만들고, 내부에 `test ALL=(ALL) NOPASSWD:ALL` 라는 
 본 예시에서는 inventory.ini를 사용하겠다. kubespray 디렉토리 위치에서, 다음 명령들을 순서대로 실행한다.
 
 ```
-cp -rfp inventory/sample/ inventory/mycluster
-cd inventory/mycluster
+cp -rfp inventory/sample/ inventory/test-cluster
+cd inventory/test-cluster
 declare -a IPS=(워커노드1ip 워커노드2ip 워커노드3ip)
 CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
 
@@ -276,27 +289,55 @@ CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/
 
 이러고 나면 `inventory/test-cluster/inventory.ini` 파일을 열어보면 해당 사항들이 반영되어있는 것을 확인할 수 있을 것이다.
 
+**중요** 그 후 본 버전만의 오류로 수정해야 하는 부분이 하나 더 있다.
+
+`vi inventory/test-cluster/group_vars/k8s_cluster/k8s-cluster.yml` 를 열어서,
+
+`remove_default_searchdomains: false` 이 부분을 찾아 주석을 해제해야 한다.
+
+그 이유는, 다음 [사이트](https://github.com/kubernetes-sigs/kubespray/issues/9948)에서 확인할 수 있는데, 
+
+단순히 kubespray 개발자들이 저 부분의 기본값을 실수로 true로 설정해두었기 때문이다.
+
+
+
 ## ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
 
 위 설정에 혹시 예전에 이미 클러스터를 만든게 있다면, 그걸 삭제하기 위해 다음 명령어를 실행한다.
 
 `ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root reset.yml`
 
-이때 reset 혹은 을 했다면, 필자의 경우 이유는 모르지만 master node와 workder node중 하나의 도메인 서버 정보가 삭제되어 nslookup naver.com 등이 작동되지 않게 되는 현상이 있었다. 그런 경우,
+이때 reset 혹은 을 했다면, 필자의 경우 이유는 모르지만 일정 확률로 master node나 workder node중 몇몇 도메인 서버 정보가 삭제되어 nslookup naver.com 등이 작동되지 않게 되는 현상이 있었다. 그런 경우,
 
-`sudo vi /etc/resolv.conf`
+## Truble shooting
 
-를 열어, `nameserver 127.0.0.53` 의 다음에 두 줄을 추가하면 문제가 해결된다.
+필자의 경우 아래와 같은 2가지 오류가 발생하였다.
 
-```
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-```
+1. 일정 확률로, 도메인 서버가 고장남
+
+이 경우를 확인하는 것은, 다음 명령어로 확인이 가능하다.
+
+`nslookup google.com`
+`ping 8.8.8.8`
+`dig +dnssec google.com`
+
+nslookup으로 정상적으로 구글의 ip가 반환되지 않고 에러가 나면서, `ping 8.8.8.8` 은 제대로 수행되고, 
+
+`dig +dnssec google.com` 에서 status가 SERVFAIL이 나온다면, ansible가 dns 설정을 중간에 잘못 건드려 발생한 오류이다.
+
+이 경우 다음과 같이 다시 고칠 수 있다.
+
+1. `sudo nano /etc/systemd/resolved.conf` 로 파일을 열고, `DNS=` 의 주석을 해제하고 해당 줄을 `DNS=8.8.8.8`로 수정한다.
+
+2. `sudo systemctl restart systemd-resolved`를 입력하여 해당사항을 반영하고, `nslookup google.com` 을 입력하여 정상적으로 값이 나오는 것을 확인한다.
+
+3. 1번에서 주석을 해제했던 부분을 원상복귀(주석처리)하고, 다시 `sudo systemctl restart systemd-resolved` 를 입력하여 해당 사항을 적용한다.
+
+이러고 나면 정상적으로 다시 nslookup google.com이 수행되는 것을 확인할 수 있다.
 
 계속 진행하자.
 
 이제 클러스터를 생성하는 명령어를 실행한다.(물론 아까와 동일하게 kubespray 디렉토리에서 입력)
-
 
 `ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml`
 
@@ -316,6 +357,13 @@ master   Ready    control-plane   4h53m   v1.25.16
 node1    Ready    <none>          4h53m   v1.25.16
 node2    Ready    <none>          4h53m   v1.25.16
 ```
+
+하지만 클러스터가 정상적으로 만들어졌다 하더라도, 아직은 안심할 수 없다. 각종 kubernetes의 시스템을 구성하는 요소들이 잘 초기화되고 실행되는지 확인해야 한다.
+
+따라서 k9s를 설치하여 나머지 Kube-system 항목들이 잘 초기화되고있는지 확인하자
+
+
+
 
 ### Node를 더 추가하려면?
 
@@ -348,11 +396,10 @@ inventory.ini파일도 수정한 후, 다음 명령어를 통해 scale할 수 �
 
 다만 필자의 경우 여기서 에러가 발생하며 정상적으로 동작하지 않았는데, 그 이유는 필자가 사용한 main branch의 kuberspray에 버그가 있었다.
 
-오류내용 : 
+오류내용은 다음과 같다.
 
 ```
-fatal: [iworker6]: FAILED! => {"msg": "{{ skip_kubeadm_images | ternary({}, _kubeadm_images) }}: {{ dict(names | map('regex_replace', '^(.*)', 'kubeadm_\\1') | zip( repos | zip(_tags, _groups) | map('zip', keys) | map('map', 'reverse') | map('community.general.dict') | map('combine', defaults))) | dict2items | rejectattr('key', 'in', excluded) | items2dict }}: {{ repos | map('split', '/') | map(attribute=-1) }}: {{ images | map(attribute=0) }}: {{ kubeadm_images_raw.stdout_lines | map('split', ':') }}: 'kubeadm_images_raw' is undefined. 'kubeadm_images_raw' is undefined. {{ kubeadm_images_raw.stdout_lines | map('split', ':') }}: 'kubeadm_images_raw' is undefined. 'kubeadm_images_raw' is undefined 
-
+'kubeadm_images_raw' is undefined
 ... 이하 생략
 ```
 
@@ -363,7 +410,44 @@ fatal: [iworker6]: FAILED! => {"msg": "{{ skip_kubeadm_images | ternary({}, _kub
 
 
 
-## Rook 설치, 설정
-## ceph 설정
-## ceph 올리기
+
+## Rook 설치, ceph 올리기
+
+[홈피링크](https://rook.github.io/docs/rook/latest-release/Getting-Started/quickstart/#prerequisites)
+
+```
+git clone --single-branch --branch v1.13.7 https://github.com/rook/rook.git
+cd rook/deploy/examples
+kubectl create -f crds.yaml -f common.yaml -f operator.yaml
+kubectl create -f cluster.yaml
+
+```
+
+## 유틸 설치, 동작 확인
+
+```
+kubectl -n rook-ceph get pod
+cd ../../
+
+(rook 디렉토리에서 다음을 실행)
+
+kubectl create -f deploy/examples/toolbox.yaml
+kubectl -n rook-ceph rollout status deploy/rook-ceph-tools
+```
+
+모니터링 쉘 실행
+
+`kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- bash`
+
+해당 쉘 내에서,
+
+`ceph status`
+
+를 통해 상태를 확인할 수 있다.
+
+만약, worker node가 3개보다 적다면, ceph의 정책상 동작이 정상적으로 돌아가고있지 않음을 확인할 수 있다.
+
+default 설정으로 최소 3개의 워커노드에 각각의 모니터가 running상태로 등록되어야하는데, 이것이 잘 되고있는지는 다음 명령어로 확인할 수 있다.
+
+`kubectl -n rook-ceph get pods -l app=rook-ceph-mon`
 
