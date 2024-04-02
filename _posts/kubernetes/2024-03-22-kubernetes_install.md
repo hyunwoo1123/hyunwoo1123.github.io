@@ -6,7 +6,7 @@ published : true
 ---
 # 개요
 
-본 문서는 kuberspray를 활용하여 kubernetes를 구축하고, rook을 사용하여 ceph을 올리기까지의 작업순서와 명령어들을 정리해둔 것임.
+kubespray를 활용하여 kubernetes를 구축하고, rook을 사용하여 ceph을 올리기까지의 작업순서와 에러대처방법 정리
 
 ## 버전정보
 
@@ -31,7 +31,7 @@ kubespray : 2.21
 
 ## 설치할 각종 소프트웨어 호환성 조사
 
-무엇보다 가장 중요한 것은, 각 소프트웨어의 버전이 서로 호환되어야 한다는 것이다.
+가장 중요한 것은, 각 소프트웨어의 버전이 서로 호환되어야 한다는 것이다.
 
 필자의 경우 이를 확인하지 않고 설치하였는데, kubespray 2.2에서 설치하여 사용되는 calico의 버전이 kubernetes 1.25버전과 호환되지 않아 오랜 시간 헤맸다.
 
@@ -39,9 +39,13 @@ kubespray : 2.21
 
 이를 방지하기 위해서 각 홈페이지에서 각 소프트웨어가 서로 어떤 버전이 호환되는지를 반드시 먼저 파악하고 정리한 후 시작해야 한다.
 
-그 예시로, (calico홈페이지)[https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements]의 `Kubernetes requirements` 탭에서, 호환되는 kubernetes의 버전을 확인할 수 있다.
+그 예시로, [calico홈페이지](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)의 `Kubernetes requirements` 탭에서, 호환되는 kubernetes의 버전을 확인할 수 있다.
+
+
 
 ## memory swap off
+
+쿠버네티스를 사용하려면 가장 기본적으로 모든 노드의 memory swap이 off 되어있어야 한다. 각 노드에서 아래 명령어로 swap을 끈다
 
 ```
 sudo swapoff -a
@@ -124,7 +128,9 @@ sudo sysctl --system
 
 ``` -->
 
-## master node에 kuberspray 설치
+## 개발서버 or 로컬에 kuberspray 설치
+
+kubespray가 알아서 kubectl, kubelet, kubeadm, cri-o, calico 등 Kubernetes 클러스터 구성에 필요한 소프트웨어를 설치하므로, 워커노드나 master node에 따로 각 소프트웨어를 다운받을 필요가 없다. 아래 명령어를 통해 kubespray를 로컬 혹은 개발서버에 설치한다.
 
 ```
 sudo apt install python3
@@ -140,27 +146,28 @@ sudo pip install -r requirements.txt
 
 
 
-## master node의 ssh key 생성 및 다른 node들에 copy
+## 로컬 혹은 개발서버의 ssh key 생성 및 다른 node들에 copy
 
-이제부터 매우 중요한 내용이며, 필자가 삽질을 매우 길게 한 부분임.
+지금 실행할 것은 아니지만, 최종적으로 세팅이 완료된 후에 실행할 명령어는
 
-지금 실행할 것은 아니지만, 있다가 최종적으로 세팅이 완료된 후에 실행할 명령어는
-
-`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml` 임.
+`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml`
 
 이 명령어가 정상적으로 동작하는 조건은 다음과 같음
 
-1. 명령어를 실행하는 master node에서, inventory.ini에 적어둔 모든 노드의 ip들에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능할 것
+1. 명령어를 실행하는 로컬 혹은 개발서버에서, inventory.ini에 적어둔 모든 노드의 ip들에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능할 것
 2. 그렇게 접근한 유저가 sudo 명령어를 비밀번호 입력 없이 실행할 수 있을 것
 
 따라서 1번부터 하나씩 차근차근 설정해보자.
 
-### 명령어를 실행하는 master node에서, inventory.ini에 적어둔 모든 노드의 ip들에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능하도록 설정
+### 명령어를 실행하는 로컬 혹은 개발서버에서, inventory.ini에 적어둔 모든 노드의 ip들에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능하도록 설정
 
 master node에서 ssh-key를 생성하고 대상 노드들에 복사한다.
 
 ```
 ssh-keygen
+ssh-copy-id 마스터노드1ip
+ssh-copy-id 마스터노드2ip
+ssh-copy-id 마스터노드3ip
 ssh-copy-id 워커노드1ip
 ssh-copy-id 워커노드2ip
 ssh-copy-id 워커노드3ip
@@ -168,9 +175,12 @@ ssh-copy-id 워커노드3ip
 
 ```
 
-master에서 ssh로 타 node들에 비밀번호 없이 접속되는지 확인
+로컬 혹은 개발서버에서 ssh로 타 node들에 비밀번호 없이 접속되는지 확인
 
 ```
+ssh 마스터노드1ip
+ssh 마스터노드2ip
+ssh 마스터노드3ip
 ssh 워커노드1ip
 ssh 워커노드2ip
 ssh 워커노드3ip
@@ -280,12 +290,12 @@ test 라는 파일을 만들고, 내부에 `test ALL=(ALL) NOPASSWD:ALL` 라는 
 ```
 cp -rfp inventory/sample/ inventory/test-cluster
 cd inventory/test-cluster
-declare -a IPS=(워커노드1ip 워커노드2ip 워커노드3ip)
+declare -a IPS=(마스터노드1ip 마스터노드2ip 마스터노드3ip 워커노드1ip 워커노드2ip 워커노드3ip)
 CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
 
 ```
 
-물론 위 워커노드 ip들은 실제 자신의 워커노드 ip에 맞게 설정해야 한다.
+물론 위 워커노드 ip들은 실제 자신의 노드 ip에 맞게 설정해야 한다.
 
 이러고 나면 `inventory/test-cluster/hosts.yaml` 파일을 열어보면 해당 사항들이 반영되어있는 것을 확인할 수 있을 것이다.
 
@@ -301,49 +311,29 @@ CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/
 아래는 그 구체적 예시이다.
 
 ```
-# ## Configure 'ip' variable to bind kubernetes services on a
-# ## different ip than the default iface
-# ## We should set etcd_member_name for etcd cluster. The node that is not a etcd member do not need to set the value, or can set the empt>
 [all]
-master1 ansible_host=192.168.8.131
-master2 ansible_host=192.168.8.132
-master3 ansible_host=192.168.8.133
-node1 ansible_host=192.168.8.134
-node2 ansible_host=192.168.8.135
-node3 ansible_host=192.168.8.136
-# node2 ansible_host=95.54.0.13  # ip=10.3.0.2 etcd_member_name=etcd2
-# node3 ansible_host=95.54.0.14  # ip=10.3.0.3 etcd_member_name=etcd3
-# node4 ansible_host=95.54.0.15  # ip=10.3.0.4 etcd_member_name=etcd4
-# node5 ansible_host=95.54.0.16  # ip=10.3.0.5 etcd_member_name=etcd5
-# node6 ansible_host=95.54.0.17  # ip=10.3.0.6 etcd_member_name=etcd6
+master1 ansible_host=192.168.***.***
+master2 ansible_host=192.168.***.***
+master3 ansible_host=192.168.***.***
+node1 ansible_host=192.168.***.***
+node2 ansible_host=192.168.***.***
+node3 ansible_host=192.168.***.***
 
-# ## configure a bastion host if your nodes are not directly reachable
-# [bastion]
-# bastion ansible_host=x.x.x.x ansible_user=some_user
 
 [kube_control_plane]
-master1 ansible_host=192.168.8.131
-master2 ansible_host=192.168.8.132
-master3 ansible_host=192.168.8.133
-# node1
-# node2
-# node3
+master1 ansible_host=192.168.***.***
+master2 ansible_host=192.168.***.***
+master3 ansible_host=192.168.***.***
 
 [etcd]
-master1 ansible_host=192.168.8.131
-master2 ansible_host=192.168.8.132
-master3 ansible_host=192.168.8.133
-# node2
-# node3
+master1 ansible_host=192.168.***.***
+master2 ansible_host=192.168.***.***
+master3 ansible_host=192.168.***.***
 
 [kube_node]
-node1 ansible_host=192.168.8.134
-node2 ansible_host=192.168.8.135
-node3 ansible_host=192.168.8.136
-# node3
-# node4
-# node5
-# node6
+node1 ansible_host=192.168.***.***
+node2 ansible_host=192.168.***.***
+node3 ansible_host=192.168.***.***
 
 [calico_rr]
 
@@ -417,9 +407,13 @@ kubectl get nodes
 
 ```
 NAME     STATUS   ROLES           AGE     VERSION
-master   Ready    control-plane   4h53m   v1.25.16
-node1    Ready    <none>          4h53m   v1.25.16
-node2    Ready    <none>          4h53m   v1.25.16
+master1  Ready    control-plane   4h53m   v1.25.6
+master2  Ready    control-plane   4h53m   v1.25.6
+master3  Ready    control-plane   4h53m   v1.25.6
+node1    Ready    <none>          4h53m   v1.25.6
+node2    Ready    <none>          4h53m   v1.25.6
+node3    Ready    <none>          4h53m   v1.25.6
+
 ```
 
 하지만 클러스터가 정상적으로 만들어졌다 하더라도, 아직은 안심할 수 없다. 각종 kubernetes의 시스템을 구성하는 요소들이 잘 초기화되고 실행되는지 확인해야 한다.
