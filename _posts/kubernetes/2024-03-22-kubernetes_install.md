@@ -140,9 +140,9 @@ sudo apt install -y python3-pip
 sudo apt install -y git
 
 
-git clone https://github.com/kubernetes-sigs/kubespray.git
+git clone --branch release-2.21 https://github.com/kubernetes-sigs/kubespray.git
 cd kubespray/
-sudo pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 
