@@ -353,7 +353,39 @@ calico_rr
 
 단순히 kubespray 개발자들이 저 부분의 기본값을 실수로 true로 설정해두었기 때문이다.
 
+## crio 사용 설정
 
+kubespray v2.21은 기본적으로 containerd를 사용하게 되어있다. 이를 cri-o로 수정하기 위해서는 다음과 같이 파일을 수정해야 한다.
+
+`inventory/test-cluster/group_vars/all/all.yml` 파일에서,
+
+```
+download_container: false
+skip_downloads: false
+etcd_deployment_type: host # optionally kubeadm
+```
+
+로 수정 혹은 내용 추가를 해야 한다.
+
+또한, `inventory/test-cluster/group_vars/k8s_cluster/k8s_cluster.yml` 파일에서,
+
+`container_manager: crio` 로 수정해야한다. 기본값으로는 `container_manager: containerd` 로 되어있을 것이다.
+
+`inventory/test-cluster/group_vars/all/crio.yml` 파일의 내용을 다음과 같이 수정해야 한다.
+
+```
+crio_registries:
+  - prefix: docker.io
+    insecure: false
+    blocked: false
+    location: registry-1.docker.io
+    unqualified: false
+    mirrors:
+      - location: 192.168.100.100:5000
+        insecure: true
+      - location: mirror.gcr.io
+        insecure: false
+```
 
 ## ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
 
@@ -365,7 +397,7 @@ calico_rr
 
 ## Truble shooting
 
-필자의 경우 아래와 같은 2가지 오류가 발생하였다.
+이때 ansible이 각 노드의 dns 설정을 건드리며 아래와 같은 오류가 발생할 수 있다. 증상과 해결방법은 다음과 같다.
 
 1. 일정 확률로, 도메인 서버가 고장남
 
