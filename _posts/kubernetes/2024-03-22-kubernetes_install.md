@@ -11,7 +11,7 @@ kubespray를 활용하여 kubernetes를 구축하고, rook을 사용하여 ceph�
 ## 버전정보
 
 OS : xUbuntu_22.04
-CRI-O : 1.26
+CRI-O : 1.25
 kubernetes : v1.25.6
 kubespray : 2.21
 
@@ -386,6 +386,10 @@ crio_registries:
       - location: mirror.gcr.io
         insecure: false
 ```
+
+[공식문서](https://github.com/kubernetes-sigs/kubespray/blob/release-2.21/docs/cri-o.md)
+
+필요한 경우 pids_limit을 올리려면 `roles/container-engine/cri-o/defaults/main.yml` 에 있는 `crio_pids_limit` 값을 수정하면 된다.
 
 ## ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
 
