@@ -289,7 +289,17 @@ CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/
 
 이러고 나면 `inventory/test-cluster/inventory.ini` 파일을 열어보면 해당 사항들이 반영되어있는 것을 확인할 수 있을 것이다.
 
-**중요** 그 후 본 버전만의 오류로 수정해야 하는 부분이 하나 더 있다.
+해당 부분에서, 
+
+```
+[kube_control_plane]
+[etcd]
+```
+두 그룹안에 각각 마스터노드와 etcd로 사용할 노드를 배치하고,
+`[kube_node]` 안에 워커노드로 사용할 노드를 배치하면 된다.
+
+
+**중요** 그 후 본 kubespray v2.21 만의 오류로 수정해야 하는 부분이 하나 더 있다.
 
 `vi inventory/test-cluster/group_vars/k8s_cluster/k8s-cluster.yml` 를 열어서,
 
