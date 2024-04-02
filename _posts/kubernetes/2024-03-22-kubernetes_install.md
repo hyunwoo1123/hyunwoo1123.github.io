@@ -287,9 +287,9 @@ CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/
 
 물론 위 워커노드 ip들은 실제 자신의 워커노드 ip에 맞게 설정해야 한다.
 
-이러고 나면 `inventory/test-cluster/inventory.ini` 파일을 열어보면 해당 사항들이 반영되어있는 것을 확인할 수 있을 것이다.
+이러고 나면 `inventory/test-cluster/hosts.yaml` 파일을 열어보면 해당 사항들이 반영되어있는 것을 확인할 수 있을 것이다.
 
-해당 부분에서, 
+이 내용에 맞춰, `inventory/test-cluster/inventory.ini` 파일을 다음과 같이 수정하자.
 
 ```
 [kube_control_plane]
@@ -298,6 +298,60 @@ CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/
 두 그룹안에 각각 마스터노드와 etcd로 사용할 노드를 배치하고,
 `[kube_node]` 안에 워커노드로 사용할 노드를 배치하면 된다.
 
+아래는 그 구체적 예시이다.
+
+```
+# ## Configure 'ip' variable to bind kubernetes services on a
+# ## different ip than the default iface
+# ## We should set etcd_member_name for etcd cluster. The node that is not a etcd member do not need to set the value, or can set the empt>
+[all]
+master1 ansible_host=192.168.8.131
+master2 ansible_host=192.168.8.132
+master3 ansible_host=192.168.8.133
+node1 ansible_host=192.168.8.134
+node2 ansible_host=192.168.8.135
+node3 ansible_host=192.168.8.136
+# node2 ansible_host=95.54.0.13  # ip=10.3.0.2 etcd_member_name=etcd2
+# node3 ansible_host=95.54.0.14  # ip=10.3.0.3 etcd_member_name=etcd3
+# node4 ansible_host=95.54.0.15  # ip=10.3.0.4 etcd_member_name=etcd4
+# node5 ansible_host=95.54.0.16  # ip=10.3.0.5 etcd_member_name=etcd5
+# node6 ansible_host=95.54.0.17  # ip=10.3.0.6 etcd_member_name=etcd6
+
+# ## configure a bastion host if your nodes are not directly reachable
+# [bastion]
+# bastion ansible_host=x.x.x.x ansible_user=some_user
+
+[kube_control_plane]
+master1 ansible_host=192.168.8.131
+master2 ansible_host=192.168.8.132
+master3 ansible_host=192.168.8.133
+# node1
+# node2
+# node3
+
+[etcd]
+master1 ansible_host=192.168.8.131
+master2 ansible_host=192.168.8.132
+master3 ansible_host=192.168.8.133
+# node2
+# node3
+
+[kube_node]
+node1 ansible_host=192.168.8.134
+node2 ansible_host=192.168.8.135
+node3 ansible_host=192.168.8.136
+# node3
+# node4
+# node5
+# node6
+
+[calico_rr]
+
+[k8s_cluster:children]
+kube_control_plane
+kube_node
+calico_rr
+```
 
 **중요** 그 후 본 kubespray v2.21 만의 오류로 수정해야 하는 부분이 하나 더 있다.
 
