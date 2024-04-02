@@ -1,12 +1,14 @@
 ---
-title: kubernetes install by kuberspray
-categories: [kubernetes,kuberspray, cri-o]
-tags: [kubernetes,kuberspray,cri-o]     # TAG names should always be lowercase
+title: kubernetes install by kubespray
+categories: [kubernetes,kubespray, cri-o]
+tags: [kubernetes,kubespray,cri-o]     # TAG names should always be lowercase
 published : true
 ---
+***kubernetes install by kubespray***
+
 # 개요
 
-kubespray를 활용하여 kubernetes를 구축하고, rook을 사용하여 ceph을 올리기까지의 작업순서와 에러대처방법 정리
+kubespray를 활용하여 kubernetes를 구축하고, rook을 사용하여 ceph을 올리기까지의 작업순서와 에러 대처방법 정리
 
 ## 버전정보
 
@@ -18,9 +20,6 @@ kubespray : 2.21
 # 순서
 0. 설치할 각종 소프트웨어의 호환성 조사
 1. memory swap off
-<!-- 2. cri-o 설치
-3. kubelet, kubeadm, kubectl 설치
-4. cri-o k8s 설정 -->
 2. master node에 kubespray 설치
 3. master node의 ssh key 생성 및 다른 node들에 copy
 4. kubespray 설정(inventory.ini 혹은 host.yaml 사용)
@@ -28,7 +27,9 @@ kubespray : 2.21
 6. Rook 설치, 설정
 7. ceph 설정
 8. ceph 올리기
-
+<!-- 2. cri-o 설치
+3. kubelet, kubeadm, kubectl 설치
+4. cri-o k8s 설정 -->
 ## 설치할 각종 소프트웨어 호환성 조사
 
 가장 중요한 것은, 각 소프트웨어의 버전이 서로 호환되어야 한다는 것이다.
@@ -128,7 +129,7 @@ sudo sysctl --system
 
 ``` -->
 
-## 개발서버 or 로컬에 kuberspray 설치
+## 개발서버 or 로컬에 kubespray 설치
 
 kubespray가 알아서 kubectl, kubelet, kubeadm, cri-o, calico 등 Kubernetes 클러스터 구성에 필요한 소프트웨어를 설치하므로, 워커노드나 master node에 따로 각 소프트웨어를 다운받을 필요가 없다. 아래 명령어를 통해 kubespray를 로컬 혹은 개발서버에 설치한다.
 
@@ -488,7 +489,7 @@ inventory.ini파일도 수정한 후, 다음 명령어를 통해 scale할 수 �
 
 `ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root scale.yml`
 
-다만 필자의 경우 여기서 에러가 발생하며 정상적으로 동작하지 않았는데, 그 이유는 필자가 사용한 main branch의 kuberspray에 버그가 있었다.
+다만 필자의 경우 여기서 에러가 발생하며 정상적으로 동작하지 않았는데, 그 이유는 필자가 사용한 main branch의 kubespray에 버그가 있었다.
 
 오류내용은 다음과 같다.
 
