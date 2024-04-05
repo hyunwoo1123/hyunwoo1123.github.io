@@ -1,9 +1,9 @@
----
+<!-- ---
 title: kubernetes install by kubespray
 categories: [kubernetes,kubespray, cri-o]
 tags: [kubernetes,kubespray,cri-o]     # TAG names should always be lowercase
 published : true
----
+--- -->
 ***kubernetes install by kubespray***
 
 # 개요
@@ -16,21 +16,34 @@ OS : xUbuntu_22.04
 CRI-O : 1.25
 kubernetes : v1.25.6
 kubespray : 2.21
+rook-ceph : v1.13.7
 
 # 순서
-0. 설치할 각종 소프트웨어의 호환성 조사
-1. memory swap off
-2. master node에 kubespray 설치
-3. master node의 ssh key 생성 및 다른 node들에 copy
-4. kubespray 설정(inventory.ini 혹은 host.yaml 사용)
-5. ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
-6. Rook 설치, 설정
-7. ceph 설정
-8. ceph 올리기
+1. 설치할 각종 소프트웨어의 호환성 조사
+2. memory swap off
+3. kubespray 설치
+4. ssh key 생성 및 다른 node들에 copy
+5. 각 노드의 해당 user가 sudo 명령어를 비밀번호 입력 없이 실행할 수 있도록 설정
+6. kubespray 설정(inventory.ini 혹은 host.yaml 사용)
+7. crio 사용 설정
+8. ansible-playbook 명령어로 클러스터 생성
+9. 정상적으로 설치되었는지 확인
+10. Rook 설치, ceph 올리기
+11. ceph 모니터링 도구 설치 및 확인
+
+kubespray를 통해 클러스터를 만드는 명령어가 정상적으로 동작할 조건은 다음과 같다.
+
+1. 모든 node의 swap 설정이 꺼져있을 것
+
+2. kubespray를 실행하는 pc에서, 모든 노드의 에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능할 것
+
+3. 그렇게 접근한 유저가 sudo 명령어를 비밀번호 입력 없이 실행할 수 있을 것
+
+따라서 하나씩 차근차근 설정해보자.
 <!-- 2. cri-o 설치
 3. kubelet, kubeadm, kubectl 설치
 4. cri-o k8s 설정 -->
-## 설치할 각종 소프트웨어 호환성 조사
+# 설치할 각종 소프트웨어 호환성 조사
 
 가장 중요한 것은, 각 소프트웨어의 버전이 서로 호환되어야 한다는 것이다.
 
@@ -42,9 +55,7 @@ kubespray : 2.21
 
 그 예시로, [calico홈페이지](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)의 `Kubernetes requirements` 탭에서, 호환되는 kubernetes의 버전을 확인할 수 있다.
 
-
-
-## memory swap off
+# memory swap off
 
 쿠버네티스를 사용하려면 가장 기본적으로 모든 노드의 memory swap이 off 되어있어야 한다. 각 노드에서 아래 명령어로 swap을 끈다
 
@@ -52,86 +63,9 @@ kubespray : 2.21
 sudo swapoff -a
 ```
 
-<!-- ## cri-o 설치
+## kubespray 설치
 
-먼저, curl 설치 확인
-
-`sudo apt-get install -y apt-transport-https ca-certificates curl`
-
-```
-
-
-echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
-
-echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.26/xUbuntu_22.04/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:1.26.list
-
-curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-archive-keyring.gpg
-
-curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.26/xUbuntu_22.04/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
-
-sudo apt-get update
-
-sudo apt-get install cri-o cri-o-runc
-```
-
-## kubelet, kubeadm, kubectl 설치
-
-```
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.25/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.25/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
-sudo apt-get update
-
-sudo apt-get install -y kubelet kubeadm kubectl
-```
-
-버전 고정
-
-`sudo apt-mark hold kubelet kubeadm kubectl`
-
-설치되었는지 확인
-
-`kubectl version`
-
-아마 이렇게 나올것이다.
-
-```
-WARNING: This version information is deprecated and will be replaced with the output from kubectl version --short.  Use --output=yaml|json to get the full version.
-Client Version: version.Info{Major:"1", Minor:"25", GitVersion:"v1.25.16", GitCommit:"c5f43560a4f98f2af3743a59299fb79f07924373", GitTreeState:"clean", BuildDate:"2023-11-15T22:39:12Z", GoVersion:"go1.20.10", Compiler:"gc", Platform:"linux/amd64"}
-Kustomize Version: v4.5.7
-The connection to the server localhost:8080 was refused - did you specify the right host or port?
-```
-
-여기서 버전정보를 확인할 수 있고, `The connection to the server localhost:8080 was refused - did you specify the right host or port?` 부분은, kubectl을 설치만 했지 아무것도 구성한 것이 없기때문에 이렇게 나온다.
-
-
-## cri-o k8s 설정
-
-```
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
-overlay
-br_netfilter
-EOF
-
-sudo modprobe overlay
-sudo modprobe br_netfilter
-
-# sysctl params required by setup, params persist across reboots
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward                 = 1
-EOF
-
-# Apply sysctl params without reboot
-sudo sysctl --system
-
-``` -->
-
-## 개발서버 or 로컬에 kubespray 설치
-
-kubespray가 알아서 kubectl, kubelet, kubeadm, cri-o, calico 등 Kubernetes 클러스터 구성에 필요한 소프트웨어를 설치하므로, 워커노드나 master node에 따로 각 소프트웨어를 다운받을 필요가 없다. 아래 명령어를 통해 kubespray를 로컬 혹은 개발서버에 설치한다.
+kubespray가 알아서 kubectl, kubelet, kubeadm, cri-o, calico 등 Kubernetes 클러스터 구성에 필요한 소프트웨어를 설치하므로, 워커노드나 master node에 따로 각 소프트웨어를 다운받을 필요가 없다. 아래 명령어를 통해 kubespray를 원하는 pc에 설치한다. 필자의 경우 master node 중 하나에 설치하여 배포하였다.
 
 ```
 sudo apt install python3
@@ -139,30 +73,14 @@ sudo apt update
 sudo apt install -y python3-pip
 sudo apt install -y git
 
-
 git clone --branch release-2.21 https://github.com/kubernetes-sigs/kubespray.git
 cd kubespray/
 pip install -r requirements.txt
 ```
 
+# ssh key 생성 및 다른 node들에 copy
 
-
-## 로컬 혹은 개발서버의 ssh key 생성 및 다른 node들에 copy
-
-지금 실행할 것은 아니지만, 최종적으로 세팅이 완료된 후에 실행할 명령어는
-
-`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml`
-
-이 명령어가 정상적으로 동작하는 조건은 다음과 같음
-
-1. 명령어를 실행하는 로컬 혹은 개발서버에서, inventory.ini에 적어둔 모든 노드의 ip들에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능할 것
-2. 그렇게 접근한 유저가 sudo 명령어를 비밀번호 입력 없이 실행할 수 있을 것
-
-따라서 1번부터 하나씩 차근차근 설정해보자.
-
-### 명령어를 실행하는 로컬 혹은 개발서버에서, inventory.ini에 적어둔 모든 노드의 ip들에 ssh로 비밀번호 없이, ssh-key를 통해 접근이 가능하도록 설정
-
-master node에서 ssh-key를 생성하고 대상 노드들에 복사한다.
+kubespray를 실행할 pc에서 ssh-key를 생성하고 대상 노드들에 복사한다.
 
 ```
 ssh-keygen
@@ -172,11 +90,9 @@ ssh-copy-id 마스터노드3ip
 ssh-copy-id 워커노드1ip
 ssh-copy-id 워커노드2ip
 ssh-copy-id 워커노드3ip
-
-
 ```
 
-로컬 혹은 개발서버에서 ssh로 타 node들에 비밀번호 없이 접속되는지 확인
+ssh로 node들에 비밀번호 없이 접속되는지 확인
 
 ```
 ssh 마스터노드1ip
@@ -185,10 +101,9 @@ ssh 마스터노드3ip
 ssh 워커노드1ip
 ssh 워커노드2ip
 ssh 워커노드3ip
-
 ```
 
-### 각 노드의 해당 user가 sudo 명령어를 비밀번호 입력 없이 실행할 수 있도록 설정
+# 각 노드의 해당 user가 sudo 명령어를 비밀번호 입력 없이 실행할 수 있도록 설정
 
 각 노드에서, 다음 명령어로 파일을 연다
 
@@ -284,30 +199,26 @@ test 라는 파일을 만들고, 내부에 `test ALL=(ALL) NOPASSWD:ALL` 라는 
 로 수정한다면 sudo group에 포함된 모든 사용자가 비밀번호 없이 사용이 가능할 것이다. 하지만 모든 sudo 그룹 사용자가 이렇게 되는 것 보단 위 방법이 좋으니, 그렇게 하자.
 
 
-## kubespray 설정(inventory.ini 혹은 hosts.yaml 사용)
+# kubespray 설정(inventory.ini 혹은 hosts.yaml 사용)
 
 본 예시에서는 inventory.ini를 사용하겠다. kubespray 디렉토리 위치에서, 다음 명령들을 순서대로 실행한다.
 
 ```
 cp -rfp inventory/sample/ inventory/test-cluster
-cd inventory/test-cluster
 declare -a IPS=(마스터노드1ip 마스터노드2ip 마스터노드3ip 워커노드1ip 워커노드2ip 워커노드3ip)
 CONFIG_FILE=inventory/test-cluster/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
-
 ```
 
-물론 위 워커노드 ip들은 실제 자신의 노드 ip에 맞게 설정해야 한다.
+이후 `inventory/test-cluster/hosts.yaml` 파일을 열어보면 해당 사항들이 반영되어있는 것을 확인할 수 있을 것이다.
 
-이러고 나면 `inventory/test-cluster/hosts.yaml` 파일을 열어보면 해당 사항들이 반영되어있는 것을 확인할 수 있을 것이다.
-
-이 내용에 맞춰, `inventory/test-cluster/inventory.ini` 파일을 다음과 같이 수정하자.
+이 내용에 맞춰, `inventory/test-cluster/inventory.ini` 파일을 열고 아래와 같은 부분들을 확인한다.
 
 ```
 [kube_control_plane]
 [etcd]
 ```
-두 그룹안에 각각 마스터노드와 etcd로 사용할 노드를 배치하고,
-`[kube_node]` 안에 워커노드로 사용할 노드를 배치하면 된다.
+위 두 그룹안에 각각 마스터노드와 etcd로 사용할 노드를 배치하고,
+`[kube_node]` 안에 워커노드로 사용할 노드를 배치해야 한다.
 
 아래는 그 구체적 예시이다.
 
@@ -354,9 +265,11 @@ calico_rr
 
 단순히 kubespray 개발자들이 저 부분의 기본값을 실수로 true로 설정해두었기 때문이다.
 
-## crio 사용 설정
+# crio 사용 설정
 
 kubespray v2.21은 기본적으로 containerd를 사용하게 되어있다. 이를 cri-o로 수정하기 위해서는 다음과 같이 파일을 수정해야 한다.
+
+[공식문서](https://github.com/kubernetes-sigs/kubespray/blob/release-2.21/docs/cri-o.md)가 존재하지만, 내용이 다수 잘못되어 있어 본 가이드를 따라가면 된다.
 
 `inventory/test-cluster/group_vars/all/all.yml` 파일에서,
 
@@ -368,11 +281,11 @@ etcd_deployment_type: host # optionally kubeadm
 
 로 수정 혹은 내용 추가를 해야 한다.
 
-또한, `inventory/test-cluster/group_vars/k8s_cluster/k8s_cluster.yml` 파일에서,
+또한, `inventory/test-cluster/group_vars/k8s_cluster/k8s-cluster.yml` 파일에서,
 
 `container_manager: crio` 로 수정해야한다. 기본값으로는 `container_manager: containerd` 로 되어있을 것이다.
 
-`inventory/test-cluster/group_vars/all/crio.yml` 파일의 내용을 다음과 같이 수정해야 한다.
+`inventory/test-cluster/group_vars/all/cri-o.yml` 파일의 내용을 다음과 같이 수정해야 한다.
 
 ```
 crio_registries:
@@ -380,25 +293,25 @@ crio_registries:
     insecure: false
     blocked: false
     location: registry-1.docker.io
-    unqualified: false
+    unqualified: true # registry 주소의 기본값을 docker.io로 사용하겠다는 설정
     mirrors:
-      - location: 192.168.100.100:5000
-        insecure: true
+      - location: {사내 내부 레지스트리 주소}
+        insecure: false
       - location: mirror.gcr.io
         insecure: false
+crio_registry_auth:
+  - registry: {사내 내부 레지스트리 주소}
+    username: {사내 내부 레지스트리 id}
+    password: {사내 내부 레지스트리 pw}
 ```
-
-[공식문서](https://github.com/kubernetes-sigs/kubespray/blob/release-2.21/docs/cri-o.md)
 
 필요한 경우 pids_limit을 올리려면 `roles/container-engine/cri-o/defaults/main.yml` 에 있는 `crio_pids_limit` 값을 수정하면 된다.
 
-## ansible-playbook 명령어로 7에서 설정된 내용대로 클러스터 생성
+# ansible-playbook 명령어로 클러스터 생성
 
-위 설정에 혹시 예전에 이미 클러스터를 만든게 있다면, 그걸 삭제하기 위해 다음 명령어를 실행한다.
+클러스터를 생성하는 명령어를 실행한다.(아까와 동일하게 kubespray 디렉토리 안에서 입력)
 
-`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root reset.yml`
-
-이때 reset 혹은 을 했다면, 필자의 경우 이유는 모르지만 일정 확률로 master node나 workder node중 몇몇 도메인 서버 정보가 삭제되어 nslookup naver.com 등이 작동되지 않게 되는 현상이 있었다. 그런 경우,
+`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml`
 
 ## Truble shooting
 
@@ -426,17 +339,16 @@ nslookup으로 정상적으로 구글의 ip가 반환되지 않고 에러가 나
 
 이러고 나면 정상적으로 다시 nslookup google.com이 수행되는 것을 확인할 수 있다.
 
-계속 진행하자.
 
-이제 클러스터를 생성하는 명령어를 실행한다.(물론 아까와 동일하게 kubespray 디렉토리에서 입력)
-
-`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root cluster.yml`
-
-### 정상적으로 설치되었는지 확인
+# 정상적으로 설치되었는지 확인
 
 ```
 mkdir ~/.kube
 sudo cp /etc/kubernetes/admin.conf ~/.kube/config
+
+# k9s에서 접근할 수 있도록 권한 설정
+sudo chmod -R 555 ~/.kube
+
 kubectl get nodes
 ```
 
@@ -458,9 +370,25 @@ node3    Ready    <none>          4h53m   v1.25.6
 따라서 k9s를 설치하여 나머지 Kube-system 항목들이 잘 초기화되고있는지 확인하자
 
 
+# 각 노드별 필수 수정사항
 
+k9s 설치 후 모든 pod들이 잘 돌아가고 있는 것을 확인했다면, kubespray 2.21 버전에서 cri-o를 사용할 때만 존재하는 버그를 수정하기 위해,
 
-### Node를 더 추가하려면?
+각 노드 별 한가지 수정이 필요하다.
+
+kubespray 2.21 버전은 이미지의 주소가 docker.io 와 같은 레포지토리 주소를 포함하지 않는 짧은 주소라면, cri-o를 사용했을 때 해당 주소를 찾지 못하는 문제가 존재한다.
+
+이는 kubespray 2.21 버전이 crio를 사용하여 배포할 때, 위 crio 사용 설정 부분에서 설정한 `cri-o.yml` 파일의 내용에 따라
+
+짧은 이미지 주소에 대해 레포지토리를 자동으로 연결해주는 `/etc/containers/registries.conf.d/01-unqualified.conf` 파일을 생성하는데, 이 파일의 내용이 잘못되기 때문이다.
+
+따라서 각 노드에서 `/etc/containers/registries.conf.d/01-unqualified.conf` 파일을 열고, 다음 내용을 확인해야 한다.
+
+`unqualified-search-registries = ['docker.io']`
+
+위 내용에서, 문제의 원인은 `'docker.io'` 이다. 이 부분을 `"docker.io"` 로 수정해야 한다.
+
+## Node를 더 추가하려면?
 
 kubernetes를 사용하는 것이니 당연히 Node를 추가하거나 줄일 일이 있을 수 있다. 이 경우, 다음과 같이 한다.
 
@@ -471,7 +399,7 @@ kubernetes를 사용하는 것이니 당연히 Node를 추가하거나 줄일 �
 
 하나씩 보자
 
-#### inventory 수정
+### inventory 수정
 
 ```
 declare -a IPS=(ip1 ip2 ip3 ip4)
@@ -479,34 +407,36 @@ CONFIG_FILE=inventory/mycluster/hosts.yaml python3 contrib/inventory_builder/inv
 
 ```
 
-#### (추가하는 경우)추가할 Node에도 해당 사용자가 sudo 명령어를 비밀번호 없이 사용할 수 있도록 설정
+### (추가하는 경우)추가할 Node의 필수사항 구성
 
-알아서 위에 작성된 가이드를 참고하여 설정하자.
+ssh로 비밀번호 없이 접속 가능하도록 설정하고, sudo 명령어를 비밀번호 입력 없이 수행할 수 있도록 설정해야 한다.(방법은 위와 동일)
 
-#### ansible로 inventory의 수정사항을 반영하여 scale하기
+### ansible로 inventory의 수정사항을 반영하여 scale하기
 
 inventory.ini파일도 수정한 후, 다음 명령어를 통해 scale할 수 있다.
 
 `ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root scale.yml`
 
-다만 필자의 경우 여기서 에러가 발생하며 정상적으로 동작하지 않았는데, 그 이유는 필자가 사용한 main branch의 kubespray에 버그가 있었다.
 
-오류내용은 다음과 같다.
+#### Truble shooting
+
+여기서 아래와 같은 증상의 에러가 발생하며 정상적으로 동작하지 않는다면, [다음 방법](https://github.com/kubernetes-sigs/kubespray/commit/c8e343ac619aa5deb47a95ddbfe271b844bdbc81)을 참고하면 된다.
 
 ```
 'kubeadm_images_raw' is undefined
 ... 이하 생략
 ```
 
-만약 필자와 동일한 오류가 있다면(아직은 main에 merge되지 않아 해당 버그가 존재하나, 이후 버전에서는 해결될 것으로 보인다)[다음과 같이](https://github.com/kubernetes-sigs/kubespray/commit/c8e343ac619aa5deb47a95ddbfe271b844bdbc81) 수정해주면 된다.
+## 클러스터 구성을 해제하고 삭제하려면??
+
+모든 클러스터 구성을 해제하고 삭제하려면 다음 명령어를 실행한다.
+
+`ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root reset.yml`
+
+이때 클러스터 구성 시 발생하는 dns 관련 문제가 발생할 확률이 높다. 해당 문제가 발생한다면 위 해당부분 가이드를 참고하여 문제를 해결하면 된다.
 
 
-
-
-
-
-
-## Rook 설치, ceph 올리기
+# Rook 설치, ceph 올리기
 
 [홈피링크](https://rook.github.io/docs/rook/latest-release/Getting-Started/quickstart/#prerequisites)
 
@@ -515,10 +445,9 @@ git clone --single-branch --branch v1.13.7 https://github.com/rook/rook.git
 cd rook/deploy/examples
 kubectl create -f crds.yaml -f common.yaml -f operator.yaml
 kubectl create -f cluster.yaml
-
 ```
 
-## 유틸 설치, 동작 확인
+# 유틸 설치, 동작 확인
 
 ```
 kubectl -n rook-ceph get pod
@@ -538,7 +467,25 @@ kubectl -n rook-ceph rollout status deploy/rook-ceph-tools
 
 `ceph status`
 
-를 통해 상태를 확인할 수 있다.
+를 통해 상태를 확인할 수 있다. 정상적으로 동작한다면 다음과 같은 출력을 확인할 수 있다.
+
+```
+  cluster:
+    id:     c4e36d4d-2059-40be-bc29-942fd43573ab
+    health: HEALTH_WARN
+            OSD count 0 < osd_pool_default_size 3
+ 
+  services:
+    mon: 3 daemons, quorum a,b,c (age 2h)
+    mgr: a(active, since 2h), standbys: b
+    osd: 0 osds: 0 up, 0 in
+ 
+  data:
+    pools:   0 pools, 0 pgs
+    objects: 0 objects, 0 B
+    usage:   0 B used, 0 B / 0 B avail
+    pgs:     
+```
 
 만약, worker node가 3개보다 적다면, ceph의 정책상 동작이 정상적으로 돌아가고있지 않음을 확인할 수 있다.
 
@@ -546,3 +493,88 @@ default 설정으로 최소 3개의 워커노드에 각각의 모니터가 runni
 
 `kubectl -n rook-ceph get pods -l app=rook-ceph-mon`
 
+
+
+
+
+
+
+
+
+
+<!-- ## cri-o 설치
+
+먼저, curl 설치 확인
+
+`sudo apt-get install -y apt-transport-https ca-certificates curl`
+
+```
+
+
+echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+
+echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.26/xUbuntu_22.04/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:1.26.list
+
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-archive-keyring.gpg
+
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.26/xUbuntu_22.04/Release.key | sudo gpg --dearmor -o /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
+
+sudo apt-get update
+
+sudo apt-get install cri-o cri-o-runc
+```
+
+## kubelet, kubeadm, kubectl 설치
+
+```
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.25/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.25/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+
+sudo apt-get install -y kubelet kubeadm kubectl
+```
+
+버전 고정
+
+`sudo apt-mark hold kubelet kubeadm kubectl`
+
+설치되었는지 확인
+
+`kubectl version`
+
+아마 이렇게 나올것이다.
+
+```
+WARNING: This version information is deprecated and will be replaced with the output from kubectl version --short.  Use --output=yaml|json to get the full version.
+Client Version: version.Info{Major:"1", Minor:"25", GitVersion:"v1.25.16", GitCommit:"c5f43560a4f98f2af3743a59299fb79f07924373", GitTreeState:"clean", BuildDate:"2023-11-15T22:39:12Z", GoVersion:"go1.20.10", Compiler:"gc", Platform:"linux/amd64"}
+Kustomize Version: v4.5.7
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+```
+
+여기서 버전정보를 확인할 수 있고, `The connection to the server localhost:8080 was refused - did you specify the right host or port?` 부분은, kubectl을 설치만 했지 아무것도 구성한 것이 없기때문에 이렇게 나온다.
+
+
+## cri-o k8s 설정
+
+```
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+# sysctl params required by setup, params persist across reboots
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+# Apply sysctl params without reboot
+sudo sysctl --system
+
+``` -->
