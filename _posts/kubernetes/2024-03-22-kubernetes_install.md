@@ -28,8 +28,7 @@ rook-ceph : v1.13.7
 7. crio 사용 설정
 8. ansible-playbook 명령어로 클러스터 생성
 9. 정상적으로 설치되었는지 확인
-10. Rook 설치, ceph 올리기
-11. ceph 모니터링 도구 설치 및 확인
+
 
 kubespray를 통해 클러스터를 만드는 명령어가 정상적으로 동작할 조건은 다음과 같다.
 
@@ -434,65 +433,6 @@ inventory.ini파일도 수정한 후, 다음 명령어를 통해 scale할 수 �
 `ansible-playbook -i inventory/test-cluster/inventory.ini  --become --become-user=root reset.yml`
 
 이때 클러스터 구성 시 발생하는 dns 관련 문제가 발생할 확률이 높다. 해당 문제가 발생한다면 위 해당부분 가이드를 참고하여 문제를 해결하면 된다.
-
-
-# Rook 설치, ceph 올리기
-
-[홈피링크](https://rook.github.io/docs/rook/latest-release/Getting-Started/quickstart/#prerequisites)
-
-```
-git clone --single-branch --branch v1.13.7 https://github.com/rook/rook.git
-cd rook/deploy/examples
-kubectl create -f crds.yaml -f common.yaml -f operator.yaml
-kubectl create -f cluster.yaml
-```
-
-# 유틸 설치, 동작 확인
-
-```
-kubectl -n rook-ceph get pod
-cd ../../
-
-(rook 디렉토리에서 다음을 실행)
-
-kubectl create -f deploy/examples/toolbox.yaml
-kubectl -n rook-ceph rollout status deploy/rook-ceph-tools
-```
-
-모니터링 쉘 실행
-
-`kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- bash`
-
-해당 쉘 내에서,
-
-`ceph status`
-
-를 통해 상태를 확인할 수 있다. 정상적으로 동작한다면 다음과 같은 출력을 확인할 수 있다.
-
-```
-  cluster:
-    id:     c4e36d4d-2059-40be-bc29-942fd43573ab
-    health: HEALTH_WARN
-            OSD count 0 < osd_pool_default_size 3
- 
-  services:
-    mon: 3 daemons, quorum a,b,c (age 2h)
-    mgr: a(active, since 2h), standbys: b
-    osd: 0 osds: 0 up, 0 in
- 
-  data:
-    pools:   0 pools, 0 pgs
-    objects: 0 objects, 0 B
-    usage:   0 B used, 0 B / 0 B avail
-    pgs:     
-```
-
-만약, worker node가 3개보다 적다면, ceph의 정책상 동작이 정상적으로 돌아가고있지 않음을 확인할 수 있다.
-
-default 설정으로 최소 3개의 워커노드에 각각의 모니터가 running상태로 등록되어야하는데, 이것이 잘 되고있는지는 다음 명령어로 확인할 수 있다.
-
-`kubectl -n rook-ceph get pods -l app=rook-ceph-mon`
-
 
 
 
